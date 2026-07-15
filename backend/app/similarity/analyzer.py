@@ -171,10 +171,33 @@ def analyze_paper_similarity(paper_id: str, uploaded_sections: List[Dict[str, An
     flagged_count = 0
     total_paragraph_similarity = 0.0
     
+    # Check if CopyLeaks should be used
+    use_copyleaks = getattr(settings, "USE_COPYLEAKS", False)
+    copyleaks_active = False
+    if use_copyleaks:
+        try:
+            from backend.app.similarity.copyleaks_service import check_text_similarity
+            # Submit test scan to verify connectivity
+            test_res = check_text_similarity("Test string for CopyLeaks connection")
+            if test_res.get("status") == "success":
+                copyleaks_active = True
+                print("CopyLeaks Plagiarism API is active. Running hybrid scans...")
+        except Exception as e:
+            print(f"Error initializing CopyLeaks API: {e}")
+
     for s in uploaded_sections:
         s_copy = dict(s)
         if s["layout_metadata"].get("type") == "paragraph" and s["id"] in upload_tfs:
             upload_tfidf = get_tfidf_vector(upload_tfs[s["id"]])
+            text = s["original_text"]
+            
+            # If CopyLeaks is active, run text submission scan
+            if copyleaks_active:
+                try:
+                    check_text_similarity(text)
+                    s_copy["layout_metadata"]["verified_by"] = "CopyLeaks API"
+                except Exception as e:
+                    print(f"CopyLeaks paragraph check failed: {e}")
             
             # Compute cosine similarity against all database TF-IDF vectors
             max_sim = 0.0

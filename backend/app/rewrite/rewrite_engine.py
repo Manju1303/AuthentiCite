@@ -33,6 +33,21 @@ def rewrite_text(
         prompt += f"Context After (DO NOT REWRITE THIS):\n{context_after}\n\n"
     prompt += "Rewritten Paragraph:"
 
+    # Check if CrewAI multi-agent rewrite should be used
+    if getattr(settings, "USE_CREWAI", False):
+        try:
+            from backend.app.rewrite.crew_rewriter import rewrite_text_with_crew
+            crew_result = rewrite_text_with_crew(
+                text=text,
+                context_before=context_before,
+                context_after=context_after,
+                target_similarity=target_similarity
+            )
+            if crew_result:
+                return crew_result
+        except Exception as e:
+            print(f"CrewAI routing failed: {e}. Falling back to single-turn LLM.")
+
     provider = settings.LLM_PROVIDER.lower()
     
     if provider == "gemini" and settings.GEMINI_API_KEY:

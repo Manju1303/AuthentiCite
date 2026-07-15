@@ -26,6 +26,15 @@ class Settings(BaseSettings):
     SIMILARITY_THRESHOLD: float = Field(default=0.20, validation_alias="SIMILARITY_THRESHOLD")
     EMBEDDING_MODEL: str = Field(default="all-MiniLM-L6-v2", validation_alias="EMBEDDING_MODEL")
 
+    # CopyLeaks API Keys
+    COPYLEAKS_EMAIL: str = Field(default="", validation_alias="COPYLEAKS_EMAIL")
+    COPYLEAKS_API_KEY: str = Field(default="", validation_alias="COPYLEAKS_API_KEY")
+    
+    # Feature Toggles
+    USE_COPYLEAKS: bool = Field(default=False, validation_alias="USE_COPYLEAKS")
+    USE_CREWAI: bool = Field(default=False, validation_alias="USE_CREWAI")
+    USE_MARKER: bool = Field(default=False, validation_alias="USE_MARKER")
+
     class Config:
         env_file = ".env"
         extra = "ignore"

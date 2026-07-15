@@ -16,6 +16,11 @@ def parse_document(file_path: str, media_dir: str = "uploads/media") -> Dict[str
         return parse_docx(file_path, media_dir)
         
     elif ext == ".pdf":
+        from backend.app.config import settings
+        if getattr(settings, "USE_MARKER", False):
+            from backend.app.parser.marker_parser import parse_pdf_with_marker
+            return parse_pdf_with_marker(file_path, media_dir)
+            
         # Check if PDF contains text, or if it is scanned
         reader = PdfReader(file_path)
         total_chars = 0
