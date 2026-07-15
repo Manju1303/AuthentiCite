@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     # Cloud API Keys
     GEMINI_API_KEY: str = Field(default="", validation_alias="GEMINI_API_KEY")
     DEEPSEEK_API_KEY: str = Field(default="", validation_alias="DEEPSEEK_API_KEY")
+    ANTHROPIC_API_KEY: str = Field(default="", validation_alias="ANTHROPIC_API_KEY")
     
     # Similarity settings
     SIMILARITY_THRESHOLD: float = Field(default=0.20, validation_alias="SIMILARITY_THRESHOLD")

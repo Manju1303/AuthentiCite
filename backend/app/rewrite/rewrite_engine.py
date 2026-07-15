@@ -104,6 +104,30 @@ def rewrite_text(
         except Exception as e:
             print(f"DeepSeek API Error: {e}")
             
+    if (provider == "claude" or provider == "anthropic") and settings.ANTHROPIC_API_KEY:
+        try:
+            url = "https://api.anthropic.com/v1/messages"
+            headers = {
+                "x-api-key": settings.ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            }
+            payload = {
+                "model": "claude-3-5-sonnet-20241022",
+                "max_tokens": 1024,
+                "system": system_instruction,
+                "messages": [
+                    {"role": "user", "content": f"Context before: {context_before}\nRewrite: {text}\nContext after: {context_after}"}
+                ],
+                "temperature": 0.2
+            }
+            response = httpx.post(url, headers=headers, json=payload, timeout=60.0)
+            response.raise_for_status()
+            res_json = response.json()
+            return res_json["content"][0]["text"].strip()
+        except Exception as e:
+            print(f"Claude API Error: {e}")
+            
     # Default to Ollama (local host)
     try:
         url = f"{settings.OLLAMA_API_URL}/api/chat"
