@@ -4,6 +4,8 @@ from typing import List, Dict, Any
 from backend.app.rebuild.styles.original import apply_original_layout
 from backend.app.rebuild.styles.ieee import apply_ieee_layout
 from backend.app.rebuild.styles.springer import apply_springer_layout
+from backend.app.rebuild.styles.profiles import JOURNAL_PROFILES
+from backend.app.rebuild.styles.profile_layout import apply_profile_layout
 
 def rebuild_document(
     sections: List[Dict[str, Any]],
@@ -30,6 +32,8 @@ def rebuild_document(
         apply_ieee_layout(doc, sections, references, layout_map, media_dir)
     elif journal_format == "springer":
         apply_springer_layout(doc, sections, references, layout_map, media_dir)
+    elif journal_format in JOURNAL_PROFILES:
+        apply_profile_layout(doc, sections, references, layout_map, JOURNAL_PROFILES[journal_format], media_dir)
     else:
         apply_original_layout(doc, sections, references, layout_map, media_dir)
         

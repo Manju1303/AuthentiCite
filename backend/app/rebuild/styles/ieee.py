@@ -126,8 +126,21 @@ def apply_ieee_layout(
     body_section.bottom_margin = Inches(1.0)
     body_section.left_margin = Inches(0.625)
     body_section.right_margin = Inches(0.625)
-    body_section.cols.num = 2
-    body_section.cols.gap = Inches(0.25)
+    
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    
+    # Set columns via XML properties to bypass python-docx API limitation
+    sectPr = body_section._sectPr
+    cols = sectPr.xpath('./w:cols')
+    if not cols:
+        cols = OxmlElement('w:cols')
+        sectPr.append(cols)
+    else:
+        cols = cols[0]
+    cols.set(qn('w:num'), '2')
+    cols.set(qn('w:space'), '360') # 360 twips = 0.25 inches
+
     
     # Regex to recognize structural headings in the body
     # e.g., "1. Introduction" or "I. Introduction"
