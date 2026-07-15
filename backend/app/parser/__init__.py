@@ -1,0 +1,32 @@
+import os
+from pypdf import PdfReader
+from typing import Dict, Any
+from backend.app.parser.docx_parser import parse_docx
+from backend.app.parser.pdf_parser import parse_pdf
+from backend.app.parser.ocr_engine import ocr_pdf
+
+def parse_document(file_path: str, media_dir: str = "uploads/media") -> Dict[str, Any]:
+    """
+    Parses a document (DOCX or PDF), extracts sections, layout structures, and references.
+    If a PDF is scanned (contains no text), it runs OCR on it.
+    """
+    ext = os.path.splitext(file_path)[1].lower()
+    
+    if ext == ".docx":
+        return parse_docx(file_path, media_dir)
+        
+    elif ext == ".pdf":
+        # Check if PDF contains text, or if it is scanned
+        reader = PdfReader(file_path)
+        total_chars = 0
+        for page in reader.pages:
+            total_chars += len(page.extract_text() or "")
+        
+        if total_chars < 50:
+            # Let's consider it a scanned PDF and run OCR
+            return ocr_pdf(file_path, media_dir)
+        else:
+            return parse_pdf(file_path, media_dir)
+            
+    else:
+        raise ValueError(f"Unsupported file format: {ext}")
