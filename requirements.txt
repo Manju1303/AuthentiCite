@@ -10,7 +10,7 @@ python-multipart==0.0.9
 pytesseract==0.3.10
 pillow==10.3.0
 pytest==8.2.2
-gradio==4.36.1
-huggingface_hub<1.0.0
+gradio==4.44.1
+
 
 

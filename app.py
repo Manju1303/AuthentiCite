@@ -1,7 +1,6 @@
 import os
 import sys
 import gradio as gr
-import uvicorn
 
 # Ensure the root directory is in the Python path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
@@ -18,16 +17,23 @@ with gr.Blocks() as demo:
     gr.Markdown("The plagiarism detection and rewrite API is running successfully.")
     gr.Markdown("Access the interactive Swagger documentation at [/docs](/docs).")
 
-# Mount Gradio interface onto our FastAPI app at the root `/`
-app = gr.mount_gradio_app(fastapi_app, demo, path="/")
+# Access Gradio's internal FastAPI app and mount our plagiarism app under /api/v1
+demo.app.mount("/api/v1", fastapi_app)
+
+# Allow FastAPI's docs to be accessible
+@demo.app.get("/docs", include_in_schema=False)
+async def get_docs():
+    from fastapi.openapi.docs import get_swagger_ui_html
+    return get_swagger_ui_html(openapi_url="/api/v1/openapi.json", title="AuthentiCite API Docs")
+
+@demo.app.get("/api/v1/openapi.json", include_in_schema=False)
+async def get_openapi():
+    return fastapi_app.openapi()
 
 if __name__ == "__main__":
-    print("Starting Plagiarism Detection Backend on Hugging Face...")
-    port = int(os.getenv("PORT", "7860"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
-    
-    # This line is never reached but must be present to satisfy the Hugging Face Space AST checker
+    # Let Gradio auto-detect the Hugging Face port, host, and SSL/protocol variables
     demo.launch()
+
 
 
 
