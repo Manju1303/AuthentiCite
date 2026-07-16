@@ -1,0 +1,17 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.db
+research_ai.db
+uploads/
+output/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+deployment_guide.md
+implementation_plan.md
+task.md

@@ -9,11 +9,22 @@ try:
 except ImportError:
     fitz = None
 
-# Try importing OCR engines
 try:
     import pytesseract
+    import shutil
+    if os.name == 'nt' and pytesseract:
+        # Check common Windows install paths for Tesseract
+        tesseract_paths = [
+            r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+            r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe"
+        ]
+        for path in tesseract_paths:
+            if os.path.exists(path):
+                pytesseract.pytesseract.tesseract_cmd = path
+                break
 except ImportError:
     pytesseract = None
+
 
 try:
     from paddleocr import PaddleOCR
