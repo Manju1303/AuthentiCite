@@ -149,7 +149,7 @@ def parse_docx(file_path: str, media_dir: str = "uploads/media") -> Dict[str, An
                     "font_size": r.font.size.pt if r.font.size else 11.0,
                     "bold": r.bold or False,
                     "italic": r.italic or False,
-                    "color": r.font.color.rgb.to_hex() if (r.font.color and r.font.color.rgb) else None
+                    "color": f"#{r.font.color.rgb[0]:02x}{r.font.color.rgb[1]:02x}{r.font.color.rgb[2]:02x}" if (r.font.color and r.font.color.rgb) else None
                 })
             
             layout_meta = {

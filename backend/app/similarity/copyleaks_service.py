@@ -38,13 +38,18 @@ def submit_text_scan(token: str, scan_id: str, text: str) -> bool:
     Submits a text block to CopyLeaks for similarity scanning.
     Note: CopyLeaks usually processes scans asynchronously and posts back to a webhook.
     """
+    import base64
     url = f"https://api.copyleaks.com/v3/scans/submit/text/{scan_id}"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
     }
+    
+    # CopyLeaks expects the text property to be base64 encoded
+    encoded_text = base64.b64encode(text.encode('utf-8')).decode('utf-8')
+    
     payload = {
-        "text56": text,  # CopyLeaks standard text payload parameter
+        "text": encoded_text,
         "properties": {
             "sandbox": True,  # Use sandbox mode for testing to avoid consuming credits
             "webhooks": {

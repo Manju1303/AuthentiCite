@@ -49,15 +49,14 @@ function RewriteContent() {
     setSuccessMsg('');
     try {
       await rewriteAll(paperId);
-      setSuccessMsg('Bulk rewrite triggered in the background. Polling for updates...');
-      // Start a simple interval to poll updates every 5 seconds until status becomes ready/parsed
+      setSuccessMsg('Bulk rewrite initiated. Fetching updates...');
       const interval = setInterval(async () => {
         const data = await getPaperDetails(paperId);
         setAnalysis(data);
         if (data.paper.status === 'ready' || data.paper.status === 'parsed') {
           clearInterval(interval);
           setBulkRewriting(false);
-          setSuccessMsg('Bulk rewrite completed successfully! Refreshed layout.');
+          setSuccessMsg('Bulk rewrite successfully completed!');
         }
       }, 4000);
     } catch (err: any) {
@@ -69,8 +68,8 @@ function RewriteContent() {
   if (!paperId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-        <p className="text-lg text-slate-400">No paper selected for rewrite.</p>
-        <button onClick={() => router.push('/')} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-bold uppercase tracking-wider text-white transition-all">
+        <p className="text-sm text-slate-400">No paper selected for rewrite.</p>
+        <button onClick={() => router.push('/')} className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-bold uppercase tracking-wider text-white transition-all">
           Go Upload File
         </button>
       </div>
@@ -80,8 +79,8 @@ function RewriteContent() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm font-semibold text-slate-400">Loading rewriter workspace...</p>
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs font-semibold text-slate-400">Loading rewriter workspace...</p>
       </div>
     );
   }
@@ -92,94 +91,127 @@ function RewriteContent() {
   const flaggedCount = sections.filter((s) => s.is_flagged).length;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
-      {/* Top Workspace Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-slate-900/40 border border-slate-850 rounded-3xl gap-6 backdrop-blur-xl sticky top-24 z-40">
-        <div className="space-y-1">
-          <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Rewriter Workspace</span>
-          <h2 className="text-xl font-extrabold text-white font-mono truncate max-w-md">{paper?.filename}</h2>
-          <p className="text-xs text-slate-400 uppercase tracking-wider">
-            {flaggedCount} sections currently flagged for plagiarism / high similarity
-          </p>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between relative bg-grid-mesh">
+      {/* Header */}
+      <header className="border-b border-slate-900 bg-slate-950/40 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-600/35">
+              <span className="text-white font-extrabold text-sm">A</span>
+            </div>
+            <span className="text-md font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-355 font-mono">
+              AuthentiCite
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="px-3 py-1 rounded-full bg-slate-900/60 text-[10px] font-semibold text-slate-450 border border-slate-800/80">
+              Rewriter Workspace
+            </span>
+          </div>
         </div>
-        <div className="flex gap-4">
-          {flaggedCount > 0 && (
+      </header>
+
+      {/* Main Container */}
+      <main className="flex-grow max-w-7xl w-full mx-auto px-6 py-8 space-y-6 animate-fade-in">
+        {/* Top Control Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between p-5 bg-slate-900/20 border border-slate-900 rounded-2xl gap-4 backdrop-blur-md">
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block">Active Workspace</span>
+            <h2 className="text-base font-extrabold text-white font-mono truncate max-w-md">{paper?.filename}</h2>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              {flaggedCount} similarity flags remaining
+            </p>
+          </div>
+          <div className="flex gap-3">
+            {flaggedCount > 0 && (
+              <button
+                onClick={handleRewriteAll}
+                disabled={bulkRewriting}
+                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-800 text-white font-bold text-xs rounded-xl tracking-wide uppercase transition-all shadow-lg shadow-rose-600/15"
+              >
+                {bulkRewriting ? 'Rewriting Flagged...' : 'Rewrite All Flagged'}
+              </button>
+            )}
             <button
-              onClick={handleRewriteAll}
-              disabled={bulkRewriting}
-              className="px-6 py-3 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-800 text-white font-bold text-sm rounded-2xl tracking-wide uppercase transition-all shadow-lg shadow-rose-600/15"
+              onClick={() => router.push(`/download?id=${paperId}`)}
+              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs rounded-xl tracking-wide uppercase transition-all shadow-lg shadow-indigo-600/15"
             >
-              {bulkRewriting ? 'Rewriting Flagged...' : 'Rewrite All Flagged'}
+              Export & Download
             </button>
-          )}
-          <button
-            onClick={() => router.push(`/download?id=${paperId}`)}
-            className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-sm rounded-2xl tracking-wide uppercase transition-all shadow-lg shadow-indigo-600/10"
-          >
-            Export & Download
-          </button>
-          <button
-            onClick={() => router.push(`/dashboard?id=${paperId}`)}
-            className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm rounded-2xl tracking-wide uppercase transition-all"
-          >
-            Back to Report
-          </button>
+            <button
+              onClick={() => router.push(`/dashboard?id=${paperId}`)}
+              className="px-4 py-2.5 bg-slate-905 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold text-xs rounded-xl tracking-wide uppercase transition-all"
+            >
+              Back to Report
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Operation messages */}
-      {successMsg && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl text-sm font-semibold text-center animate-pulse">
-          {successMsg}
-        </div>
-      )}
-      {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-2xl text-sm font-semibold text-center">
-          {error}
-        </div>
-      )}
+        {/* Notifications */}
+        {successMsg && (
+          <div className="p-3 bg-emerald-500/5 border border-emerald-500/15 text-emerald-400 rounded-xl text-xs font-semibold text-center animate-pulse">
+            {successMsg}
+          </div>
+        )}
+        {error && (
+          <div className="p-3 bg-rose-500/5 border border-rose-500/15 text-rose-400 rounded-xl text-xs font-semibold text-center">
+            {error}
+          </div>
+        )}
 
-      {/* Editor flow */}
-      <div className="space-y-8">
-        <h3 className="text-lg font-bold text-white tracking-tight">Interactive Editor Blocks</h3>
-        <div className="space-y-6">
-          {sections.map((sec) => {
-            const isParagraph = sec.layout_metadata.type === 'paragraph';
+        {/* Editor Blocks */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center pb-2">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Interactive Editor Blocks</h3>
+            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+              Expand items below to compare
+            </span>
+          </div>
 
-            if (!isParagraph) {
+          <div className="space-y-4">
+            {sections.map((sec) => {
+              const isParagraph = sec.layout_metadata.type === 'paragraph';
+
+              if (!isParagraph) {
+                return (
+                  <div key={sec.id} className="p-3 bg-slate-900/10 border border-slate-950 rounded-xl text-[10px] text-slate-550 italic uppercase tracking-wider text-center select-none">
+                    [{sec.layout_metadata.type} block preserved in export]
+                  </div>
+                );
+              }
+
               return (
-                <div key={sec.id} className="p-5 bg-slate-900/10 border border-slate-900 rounded-3xl text-sm text-slate-500 italic select-none">
-                  [{sec.layout_metadata.type.toUpperCase()} block is preserved in final formatting]
-                </div>
+                <CompareView
+                  key={sec.id}
+                  section={sec}
+                  onUpdate={handleUpdateSection}
+                />
               );
-            }
-
-            return (
-              <CompareView
-                key={sec.id}
-                section={sec}
-                onUpdate={handleUpdateSection}
-              />
-            );
-          })}
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* Bibliography References */}
-      {references.length > 0 && (
-        <div className="p-6 bg-slate-900/40 border border-slate-850 rounded-3xl backdrop-blur-xl space-y-4">
-          <h3 className="text-base font-bold text-white uppercase tracking-wider border-b border-slate-850 pb-2">
-            Preserved References list
-          </h3>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-slate-400 font-sans">
-            {references.map((ref) => (
-              <li key={ref.id} className="leading-relaxed pl-2">
-                <span className="text-slate-300">{ref.raw_reference}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
+        {/* Preserved References */}
+        {references.length > 0 && (
+          <div className="p-5 bg-slate-900/15 border border-slate-900 rounded-2xl backdrop-blur-md space-y-3">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-850 pb-2">
+              Preserved References
+            </h3>
+            <ol className="list-decimal list-inside space-y-1.5 text-xs text-slate-400 font-sans">
+              {references.map((ref) => (
+                <li key={ref.id} className="leading-relaxed pl-2">
+                  <span className="text-slate-300">{ref.raw_reference}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-950/80 py-6 text-center text-[10px] text-slate-500 bg-slate-950/40">
+        <p>© 2026 AuthentiCite. Managed and processed locally.</p>
+      </footer>
     </div>
   );
 }
@@ -188,8 +220,8 @@ export default function Rewrite() {
   return (
     <Suspense fallback={
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm font-semibold text-slate-400">Loading rewriter workspace...</p>
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs font-semibold text-slate-400">Loading rewriter workspace...</p>
       </div>
     }>
       <RewriteContent />
