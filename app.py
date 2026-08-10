@@ -26,11 +26,18 @@ with gr.Blocks(title="AuthentiCite API") as demo:
     btn = gr.Button("🔍 Check API & ZeroGPU Health")
     btn.click(fn=zerogpu_health_check, inputs=[inp], outputs=[out])
 
-# Mount our backend FastAPI routes onto Gradio's FastAPI instance
-demo.app.mount("/api/v1", fastapi_app)
+# Mount Gradio UI onto the main FastAPI application at /ui
+app = gr.mount_gradio_app(fastapi_app, demo, path="/ui")
+
+@fastapi_app.get("/", include_in_schema=False)
+def root_redirect():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/ui")
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=7860, reload=False)
+
 
 
 
