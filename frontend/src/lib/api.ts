@@ -112,3 +112,84 @@ export async function rebuildPaper(paperId: string, format: string): Promise<{ f
 export function getDownloadUrl(paperId: string, format: string): string {
   return `${API_BASE_URL}/api/v1/papers/${paperId}/download?file_format=${format}`;
 }
+
+export interface RAGCitation {
+  citation_id: string;
+  section_id: string;
+  paper_id: string;
+  page_number: number;
+  snippet: string;
+  score: number;
+}
+
+export interface RAGResponse {
+  query: string;
+  answer: string;
+  citations: RAGCitation[];
+  context_used: string[];
+}
+
+export async function queryRAG(query: string, paperId?: string): Promise<RAGResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/rag/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, paper_id: paperId, top_k: 4 }),
+  });
+  if (!response.ok) throw new Error('Failed to query RAG assistant');
+  return response.json();
+}
+
+export async function uploadOCR(file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/rag/ocr`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!response.ok) throw new Error('Failed to run OCR on document');
+  return response.json();
+}
+
+export interface PlagiarismRecommendation {
+  section_id: string;
+  section_name: string;
+  similarity_score: number;
+  match_source_file: string;
+  recommended_action: string;
+  tactics: string[];
+  snippet: string;
+}
+
+export interface PlagiarismAdviceResponse {
+  paper_id: string;
+  filename: string;
+  overall_similarity: number;
+  flagged_count: number;
+  strategy_summary: string;
+  recommendations: PlagiarismRecommendation[];
+}
+
+export async function generatePaper(topic: string, journalTier: string = 'q1_ieee', journalFormat: string = 'ieee'): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/generator/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ topic, journal_tier: journalTier, journal_format: journalFormat }),
+  });
+  if (!response.ok) throw new Error('Failed to generate research paper');
+  return response.json();
+}
+
+export async function getJournalTiers(): Promise<Record<string, { name: string; style: string; citation_style: string }>> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/generator/tiers`);
+  if (!response.ok) throw new Error('Failed to fetch journal tiers');
+  return response.json();
+}
+
+export async function getPlagiarismAdvice(paperId: string): Promise<PlagiarismAdviceResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/advisor/${paperId}`);
+  if (!response.ok) throw new Error('Failed to fetch plagiarism reduction advice');
+  return response.json();
+}
+
+

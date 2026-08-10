@@ -4,6 +4,8 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getPaperDetails, analyzePaper, PaperAnalysis, Section } from '@/lib/api';
 import { SimilarityGauge } from '@/components/SimilarityGauge';
+import { RAGChat } from '@/components/RAGChat';
+import { PlagiarismAdvisor } from '@/components/PlagiarismAdvisor';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -14,6 +16,10 @@ function DashboardContent() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<PaperAnalysis | null>(null);
   const [error, setError] = useState('');
+
+  const [showRAG, setShowRAG] = useState(false);
+  const [showAdvisor, setShowAdvisor] = useState(false);
+  const [highlightedSectionId, setHighlightedSectionId] = useState<string | null>(null);
 
   const fetchDetails = async () => {
     if (!paperId) return;
@@ -118,6 +124,26 @@ function DashboardContent() {
             </p>
           </div>
           <div className="flex gap-3">
+            <button
+              onClick={() => setShowAdvisor(!showAdvisor)}
+              className={`px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide uppercase transition-all flex items-center gap-1.5 ${
+                showAdvisor
+                  ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/25'
+                  : 'bg-slate-900 border border-slate-800 text-rose-400 hover:bg-slate-850'
+              }`}
+            >
+              <span>🛡️ Reduction Advisor</span>
+            </button>
+            <button
+              onClick={() => setShowRAG(!showRAG)}
+              className={`px-4 py-2.5 rounded-xl font-bold text-xs tracking-wide uppercase transition-all flex items-center gap-1.5 ${
+                showRAG
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+                  : 'bg-slate-900 border border-slate-800 text-indigo-400 hover:bg-slate-850'
+              }`}
+            >
+              <span>🧠 RAG Assistant</span>
+            </button>
             {!isAnalyzed ? (
               <button
                 onClick={handleRunAnalysis}
@@ -142,6 +168,34 @@ function DashboardContent() {
             </button>
           </div>
         </div>
+
+        {/* Reduction Advisor Panel */}
+        {showAdvisor && paperId && (
+          <div className="mb-6">
+            <PlagiarismAdvisor
+              paperId={paperId}
+              onRewriteSection={(secId) => {
+                const el = document.getElementById(secId);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              onRewriteAll={() => router.push(`/rewrite?id=${paperId}`)}
+            />
+          </div>
+        )}
+
+        {/* RAG Assistant Workspace Drawer / Grid Split */}
+        {showRAG && (
+          <div className="mb-6 h-[550px]">
+            <RAGChat
+              paperId={paperId}
+              onCitationClick={(secId) => {
+                setHighlightedSectionId(secId);
+                const el = document.getElementById(secId);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+            />
+          </div>
+        )}
 
         {isAnalyzed ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -194,12 +248,17 @@ function DashboardContent() {
                     );
                   }
 
+                  const isHighlighted = highlightedSectionId === sec.id;
+
                   return (
                     <div
                       key={sec.id}
+                      id={sec.id}
                       onClick={() => router.push(`/rewrite?id=${paperId}`)}
                       className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 ${
-                        sec.is_flagged
+                        isHighlighted
+                          ? 'ring-2 ring-indigo-500 bg-indigo-950/30 border-indigo-500/50 shadow-lg shadow-indigo-500/20'
+                          : sec.is_flagged
                           ? 'bg-rose-500/[0.02] border-rose-500/15 hover:border-rose-500/30'
                           : 'bg-slate-900/10 border-slate-900 hover:border-slate-800'
                       }`}

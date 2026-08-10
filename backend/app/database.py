@@ -6,7 +6,7 @@ from backend.app.config import settings
 DB_PATH = settings.DATABASE_URL.replace("sqlite:///", "")
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=30.0)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -156,9 +156,15 @@ def add_references(paper_id: str, refs: list):
     conn = get_db_connection()
     cursor = conn.cursor()
     for idx, ref in enumerate(refs):
+        if isinstance(ref, dict):
+            raw = ref.get("raw_reference", str(ref))
+            key = ref.get("citation_key")
+        else:
+            raw = str(ref)
+            key = f"[{idx+1}]"
         cursor.execute(
             "INSERT INTO references_list (id, paper_id, raw_reference, citation_key) VALUES (?, ?, ?, ?)",
-            (f"{paper_id}_ref_{idx}", paper_id, ref.get("raw_reference"), ref.get("citation_key"))
+            (f"{paper_id}_ref_{idx}", paper_id, raw, key)
         )
     conn.commit()
     conn.close()

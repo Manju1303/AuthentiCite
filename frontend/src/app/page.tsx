@@ -27,6 +27,12 @@ export default function Home() {
             </span>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push('/generate')}
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs rounded-xl tracking-wide uppercase transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-1.5"
+            >
+              <span>📝 Paper Generator</span>
+            </button>
             <span className="px-3 py-1 rounded-full bg-slate-900/60 text-[10px] font-semibold text-slate-400 border border-slate-800/80">
               v1.0.0
             </span>
@@ -39,10 +45,10 @@ export default function Home() {
         <div className="max-w-3xl w-full text-center space-y-8 animate-fade-in">
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white max-w-2xl mx-auto leading-tight font-sans">
-              Plagiarism Rewrite & Analysis
+              Plagiarism Rewrite & Q1 Journal Paper Generator
             </h1>
             <p className="text-sm md:text-base text-slate-400 max-w-xl mx-auto leading-relaxed">
-              Upload your academic papers to analyze similarity structures, rewrite flagged paragraphs in an academic tone, and export directly in professional layouts.
+              Upload academic papers for similarity analysis & plagiarism reduction recommendations, or generate new Q1–Q4 papers directly from topic prompts.
             </p>
           </div>
 

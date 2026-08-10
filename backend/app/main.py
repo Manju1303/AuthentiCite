@@ -3,10 +3,14 @@ import uuid
 import shutil
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
 from backend.app.config import settings
+from backend.app.rag import rag_service, parse_document_ocr
+from backend.app.generator.paper_generator import generate_full_paper, JOURNAL_TIERS
+from backend.app.advisor.plagiarism_advisor import generate_reduction_advice
 from backend.app import database as db
 from backend.app.models import (
     PaperResponse, 
@@ -18,12 +22,19 @@ from backend.app.models import (
 from backend.app.parser import parse_document
 from backend.app.chunker.chunk_manager import get_paragraph_with_context
 from backend.app.similarity import analyze_paper_similarity, save_section_embeddings
+from contextlib import asynccontextmanager
+
 from backend.app.rewrite import rewrite_text
 from backend.app.quality import check_academic_quality
 from backend.app.rebuild import rebuild_document
 from backend.app.export.exporter import convert_docx_to_pdf
 
-app = FastAPI(title=settings.PROJECT_NAME)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    db.init_db()
+    yield
+
+app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
 # Setup CORS middleware
 app.add_middleware(
@@ -33,10 +44,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("startup")
-def startup_event():
-    db.init_db()
 
 @app.post("/api/v1/papers/upload", response_model=PaperResponse)
 async def upload_paper(file: UploadFile = File(...)):
@@ -251,3 +258,76 @@ def download_rebuilt_file(paper_id: str, file_format: str = Query("docx", enum=[
             )
             
     return FileResponse(docx_path, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", filename=f"rebuilt_paper.docx")
+
+
+# --- RAG & OCR API Endpoints ---
+
+class RAGQueryRequest(BaseModel):
+    query: str
+    paper_id: Optional[str] = None
+    top_k: Optional[int] = 4
+
+@app.post("/api/v1/rag/query")
+def rag_query(request: RAGQueryRequest):
+    if not request.query.strip():
+        raise HTTPException(status_code=400, detail="Query string cannot be empty.")
+    return rag_service.query_rag(query=request.query, paper_id=request.paper_id, top_k=request.top_k or 4)
+
+@app.post("/api/v1/rag/stream")
+def rag_stream_query(request: RAGQueryRequest):
+    if not request.query.strip():
+        raise HTTPException(status_code=400, detail="Query string cannot be empty.")
+    return StreamingResponse(
+        rag_service.stream_rag_response(query=request.query, paper_id=request.paper_id, top_k=request.top_k or 4),
+        media_type="text/event-stream"
+    )
+
+@app.post("/api/v1/rag/ocr")
+async def rag_ocr_upload(file: UploadFile = File(...)):
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in [".pdf", ".png", ".jpg", ".jpeg"]:
+        raise HTTPException(status_code=400, detail="Unsupported file format for OCR.")
+    
+    temp_id = str(uuid.uuid4())
+    temp_path = os.path.join(settings.UPLOAD_DIR, f"ocr_{temp_id}{ext}")
+    
+    with open(temp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    try:
+        parsed_result = parse_document_ocr(temp_path)
+        return parsed_result
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+
+# --- Paper Generator & Plagiarism Advisor API Endpoints ---
+
+class PaperGenerateRequest(BaseModel):
+    topic: str
+    journal_tier: Optional[str] = "q1_ieee"
+    journal_format: Optional[str] = "ieee"
+
+@app.get("/api/v1/generator/tiers")
+def get_journal_tiers():
+    return JOURNAL_TIERS
+
+@app.post("/api/v1/generator/generate")
+def generate_paper(request: PaperGenerateRequest):
+    if not request.topic.strip():
+        raise HTTPException(status_code=400, detail="Topic string cannot be empty.")
+    return generate_full_paper(
+        topic=request.topic,
+        journal_tier=request.journal_tier or "q1_ieee",
+        journal_format=request.journal_format or "ieee"
+    )
+
+@app.get("/api/v1/advisor/{paper_id}")
+def get_plagiarism_advisor(paper_id: str):
+    paper = db.get_paper(paper_id)
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found.")
+    return generate_reduction_advice(paper_id)
+
+

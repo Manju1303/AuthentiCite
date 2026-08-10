@@ -113,8 +113,8 @@ def rewrite_text(
                 "content-type": "application/json"
             }
             payload = {
-                "model": "claude-3-5-sonnet-20241022",
-                "max_tokens": 1024,
+                "model": settings.CLAUDE_MODEL,
+                "max_tokens": settings.MAX_TOKENS,
                 "system": system_instruction,
                 "messages": [
                     {"role": "user", "content": f"Context before: {context_before}\nRewrite: {text}\nContext after: {context_after}"}
