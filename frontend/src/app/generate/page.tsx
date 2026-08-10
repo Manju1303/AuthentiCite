@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { generatePaper, rebuildPaper, getDownloadUrl } from '@/lib/api';
+import AcademicPaperViewer from '@/components/AcademicPaperViewer';
+
 
 export default function GeneratePaperPage() {
   const router = useRouter();
@@ -127,47 +129,20 @@ export default function GeneratePaperPage() {
 
         {/* Generated Paper Result Preview */}
         {resultPaper && (
-          <div className="p-8 bg-slate-900/60 border border-slate-800 rounded-3xl space-y-6 shadow-2xl animate-fade-in backdrop-blur-xl">
-            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 gap-4">
-              <div>
-                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block font-mono">
-                  {resultPaper.journal_tier}
-                </span>
-                <h2 className="text-lg font-extrabold text-white mt-1">{resultPaper.title}</h2>
-              </div>
-
-              {downloadUrl && (
-                <a
-                  href={downloadUrl}
-                  download
-                  className="px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl tracking-wide uppercase transition-all shadow-lg shadow-emerald-600/20 flex items-center space-x-2 shrink-0"
-                >
-                  <span>📥 Download DOCX Paper</span>
-                </a>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
-              <div className="p-4 bg-slate-950/60 border border-slate-850 rounded-xl space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sections</span>
-                <p className="text-lg font-extrabold text-white">{resultPaper.sections_count}</p>
-              </div>
-              <div className="p-4 bg-slate-950/60 border border-slate-850 rounded-xl space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">References</span>
-                <p className="text-lg font-extrabold text-white">{resultPaper.references_count}</p>
-              </div>
-              <div className="p-4 bg-slate-950/60 border border-slate-850 rounded-xl space-y-1 col-span-2 md:col-span-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Action</span>
-                <button
-                  onClick={() => router.push(`/dashboard?id=${resultPaper.paper_id}`)}
-                  className="text-xs font-bold text-indigo-400 hover:underline block pt-1"
-                >
-                  Open in Workspace →
-                </button>
-              </div>
-            </div>
-          </div>
+          <AcademicPaperViewer
+            paper={{
+              paper_id: resultPaper.paper_id,
+              title: resultPaper.title,
+              journal_tier: resultPaper.journal_tier,
+              abstract: resultPaper.abstract || 'This paper presents a comprehensive research framework.',
+              keywords: resultPaper.keywords || 'Artificial Intelligence, Machine Learning, Data Science',
+              sections: resultPaper.sections || [],
+              references: resultPaper.references || []
+            }}
+            onOpenWorkspace={(id) => router.push(`/dashboard?id=${id}`)}
+          />
         )}
+
       </main>
 
       {/* Footer */}
