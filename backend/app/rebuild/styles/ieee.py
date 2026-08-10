@@ -149,6 +149,8 @@ def apply_ieee_layout(
     
     roman_numeral_map = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
     l1_counter = 0
+    fig_counter = 0
+    table_counter = 0
 
     for block in body_blocks:
         meta = block["layout_metadata"]
@@ -188,18 +190,20 @@ def apply_ieee_layout(
                 add_styled_paragraph(doc, text, 10, align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_before=0, space_after=0, first_line_indent=0.15)
                 
         elif b_type == "image":
+            fig_counter += 1
             image_name = meta.get("image_name")
-            image_path = os.path.join(media_dir, image_name)
-            if os.path.exists(image_path):
+            image_path = os.path.join(media_dir, image_name) if image_name else ""
+            if image_path and os.path.exists(image_path):
                 # Double column layout images are usually centered in column width
                 p = doc.add_paragraph()
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 p.add_run().add_picture(image_path, width=Inches(3.2)) # fits standard IEEE column width (3.2 inches)
                 
                 # Bottom caption
-                add_styled_paragraph(doc, f"Fig. {element_index}. Fig Caption", 8, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=4, space_after=8)
+                add_styled_paragraph(doc, f"Fig. {fig_counter}. Figure Caption", 8, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=4, space_after=8)
                 
         elif b_type == "table":
+            table_counter += 1
             # Reconstruct table centered
             lines = text.strip().split("\n")
             if len(lines) >= 2:
@@ -213,7 +217,8 @@ def apply_ieee_layout(
                 
                 if rows_cells:
                     # IEEE captions are ABOVE tables in 8pt Small Caps (or capitalized)
-                    add_styled_paragraph(doc, f"TABLE {element_index}. TABLE CAPTION", 8, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=8, space_after=4)
+                    add_styled_paragraph(doc, f"TABLE {table_counter}. TABLE CAPTION", 8, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=8, space_after=4)
+
                     
                     table = doc.add_table(rows=len(rows_cells), cols=len(rows_cells[0]))
                     table.style = 'Table Grid'

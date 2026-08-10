@@ -131,38 +131,31 @@ def apply_springer_layout(
                 
             if is_heading_1:
                 l1_counter += 1
-                l2_counter = 0 # reset subheading counter
                 header_text = clean_text
-                # Enforce numbering e.g. "1 Introduction" (without trailing dot in Springer LNCS)
-                header_text = re.sub(r"^[\d\.]+\s*", "", header_text) # remove existing number
-                header_text = f"{l1_counter} {header_text}"
+                if not re.match(r"^\d+\.", header_text):
+                    header_text = f"{l1_counter}. {header_text}"
                 
-                add_styled_paragraph(doc, header_text, 12, bold=True, align=WD_ALIGN_PARAGRAPH.LEFT, space_before=12, space_after=6)
+                add_styled_paragraph(doc, header_text, 12, bold=True, align=WD_ALIGN_PARAGRAPH.LEFT, space_before=14, space_after=6)
                 
             elif is_heading_2:
-                l2_counter += 1
-                header_text = clean_text
-                header_text = re.sub(r"^[\d\.]+\s*", "", header_text)
-                header_text = f"{l1_counter}.{l2_counter} {header_text}"
-                
-                add_styled_paragraph(doc, header_text, 10, bold=True, align=WD_ALIGN_PARAGRAPH.LEFT, space_before=6, space_after=4)
+                add_styled_paragraph(doc, clean_text, 10, bold=True, align=WD_ALIGN_PARAGRAPH.LEFT, space_before=8, space_after=4)
                 
             else:
-                # Normal paragraph text (10pt, justified, first line indent = 0.15 in)
                 add_styled_paragraph(doc, text, 10, align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_before=0, space_after=0, first_line_indent=0.15)
                 
         elif b_type == "image":
+            fig_counter += 1
             image_name = meta.get("image_name")
-            image_path = os.path.join(media_dir, image_name)
-            if os.path.exists(image_path):
+            image_path = os.path.join(media_dir, image_name) if image_name else ""
+            if image_path and os.path.exists(image_path):
                 p = doc.add_paragraph()
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 p.add_run().add_picture(image_path, width=Inches(4.5))
                 
-                # Figure caption below image
-                add_styled_paragraph(doc, f"Fig. {element_index}. Fig Caption", 9, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=4, space_after=8)
+                add_styled_paragraph(doc, f"Fig. {fig_counter}. Figure Caption", 9, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=4, space_after=8)
                 
         elif b_type == "table":
+            table_counter += 1
             lines = text.strip().split("\n")
             if len(lines) >= 2:
                 rows_cells = []
@@ -174,8 +167,8 @@ def apply_springer_layout(
                         rows_cells.append(cells)
                 
                 if rows_cells:
-                    # Springer table captions are ABOVE tables in 9pt
-                    add_styled_paragraph(doc, f"Table {element_index}. Table Caption", 9, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=8, space_after=4)
+                    add_styled_paragraph(doc, f"Table {table_counter}. Table Caption", 9, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=8, space_after=4)
+
                     
                     table = doc.add_table(rows=len(rows_cells), cols=len(rows_cells[0]))
                     table.style = 'Table Grid'
