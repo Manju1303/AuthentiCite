@@ -14,25 +14,24 @@ os.makedirs("output", exist_ok=True)
 
 # Top-level @spaces.GPU function required by ZeroGPU environment
 @spaces.GPU(duration=5)
-def zerogpu_health_check():
-    return "✅ AuthentiCite API running on ZeroGPU — All systems operational"
+def zerogpu_health_check(text: str = "ping"):
+    return f"✅ AuthentiCite API running on ZeroGPU — Status: OK ({text})"
 
-with gr.Blocks() as demo:
+with gr.Blocks(title="AuthentiCite API") as demo:
     gr.Markdown("# 🛡️ AuthentiCite Backend API")
-    gr.Markdown("The plagiarism detection and rewrite API is running successfully.")
-    gr.Markdown("Access the interactive Swagger documentation at [/docs](/docs).")
+    gr.Markdown("The plagiarism detection, paper generator, and rewrite API is running successfully.")
 
-    health_output = gr.Textbox(label="API Status", interactive=False)
-    health_btn = gr.Button("🔍 Check API Health")
-    health_btn.click(fn=zerogpu_health_check, inputs=[], outputs=[health_output])
+    inp = gr.Textbox(label="Health Ping", value="System Status")
+    out = gr.Textbox(label="ZeroGPU Status")
+    btn = gr.Button("🔍 Check API & ZeroGPU Health")
+    btn.click(fn=zerogpu_health_check, inputs=[inp], outputs=[out])
 
-# Mount Gradio UI onto the FastAPI application at root path /
-app = gr.mount_gradio_app(fastapi_app, demo, path="/")
-
+# Mount our backend FastAPI routes onto Gradio's FastAPI instance
+demo.app.mount("/api/v1", fastapi_app)
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    demo.launch(server_name="0.0.0.0", server_port=7860)
+
 
 
 
