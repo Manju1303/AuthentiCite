@@ -12,6 +12,10 @@ interface PaperData {
   paper_id: string;
   title: string;
   journal_tier: string;
+  authors?: string;
+  affiliation?: string;
+  conference_info?: string;
+  doi?: string;
   abstract: string;
   keywords: string;
   sections: Section[];
@@ -22,6 +26,7 @@ interface AcademicPaperViewerProps {
   paper: PaperData;
   onOpenWorkspace?: (paperId: string) => void;
 }
+
 
 export default function AcademicPaperViewer({ paper, onOpenWorkspace }: AcademicPaperViewerProps) {
   const [copied, setCopied] = useState(false);
@@ -101,16 +106,22 @@ export default function AcademicPaperViewer({ paper, onOpenWorkspace }: Academic
         {/* Header Header Info */}
         <div className="text-center space-y-4 border-b border-slate-800 pb-8">
           <div className="text-[11px] font-mono font-bold text-indigo-400 tracking-widest uppercase">
-            IEEE Transactions on Artificial Intelligence & Cybernetics
+            {paper.conference_info || 'In Proceedings of the 3rd International Conference on Futuristic Technology (INCOFT 2025)'}
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug max-w-3xl mx-auto font-serif">
             {paper.title}
           </h1>
 
           <div className="text-xs font-sans text-slate-400 space-y-1 pt-2">
-            <p className="font-semibold text-slate-200">A. Research Team & AuthentiCite AI Synthesis Engine</p>
-            <p className="text-[11px] text-slate-400">Department of Advanced Computer Science, Research AI Labs</p>
-            <p className="text-[10px] text-indigo-400 font-mono">IEEE Member Access ID: 940218-AC</p>
+            <p className="font-bold text-slate-100 text-sm">
+              {paper.authors || 'Divya B V, Anup Rao K, Ashish K Jacob, Vaishnav Pramod, Pattabi Ram'}
+            </p>
+            <p className="text-[11px] text-slate-400 max-w-xl mx-auto">
+              {paper.affiliation || 'School of Electrical & Electronics Engineering, REVA University, Bangalore, India'}
+            </p>
+            <p className="text-[10px] text-indigo-400 font-mono pt-1">
+              DOI: {paper.doi || '10.5220/0013734900004664'} | License: CC BY-NC-ND 4.0
+            </p>
           </div>
         </div>
 
@@ -145,61 +156,85 @@ export default function AcademicPaperViewer({ paper, onOpenWorkspace }: Academic
                 {sec.content}
               </p>
 
-              {/* Dynamically Inject Figure 1 into Methodology section */}
-              {sec.section_name.toLowerCase().includes('methodology') && (
-                <div className="my-6 p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3 font-sans text-center">
+              {/* Drone Quadcopter Diagram for Construction Section */}
+              {(sec.section_name.toLowerCase().includes('construction') || sec.section_name.toLowerCase().includes('quadcopter')) && (
+                <div className="my-6 p-4 bg-slate-950/90 border border-slate-800 rounded-xl space-y-3 font-sans text-center">
                   <div className="w-full py-4 flex items-center justify-center bg-slate-900 rounded-lg border border-slate-850">
-                    <svg className="w-full max-w-xs h-32 text-indigo-400" viewBox="0 0 400 120">
-                      <rect x="10" y="35" width="90" height="50" rx="8" fill="#1e1b4b" stroke="#6366f1" strokeWidth="2" />
-                      <text x="55" y="65" fill="#e0e7ff" fontSize="10" fontWeight="bold" textAnchor="middle">Input Vectors</text>
+                    <svg className="w-full max-w-xs h-36 text-indigo-400" viewBox="0 0 300 160">
+                      {/* Frame Cross Arms */}
+                      <line x1="50" y1="30" x2="250" y2="130" stroke="#4f46e5" strokeWidth="4" />
+                      <line x1="250" y1="30" x2="50" y2="130" stroke="#4f46e5" strokeWidth="4" />
                       
-                      <line x1="100" y1="60" x2="140" y2="60" stroke="#6366f1" strokeWidth="2" markerEnd="url(#arrow)" />
-                      
-                      <rect x="140" y="35" width="110" height="50" rx="8" fill="#311b92" stroke="#818cf8" strokeWidth="2" />
-                      <text x="195" y="60" fill="#ffffff" fontSize="10" fontWeight="bold" textAnchor="middle">Kinetic Vision</text>
-                      <text x="195" y="73" fill="#c7d2fe" fontSize="8" textAnchor="middle">Feature Net</text>
-                      
-                      <line x1="250" y1="60" x2="290" y2="60" stroke="#6366f1" strokeWidth="2" />
-                      
-                      <rect x="290" y="35" width="100" height="50" rx="8" fill="#1e1b4b" stroke="#a5b4fc" strokeWidth="2" />
-                      <text x="340" y="60" fill="#e0e7ff" fontSize="10" fontWeight="bold" textAnchor="middle">Control Barrier</text>
-                      <text x="340" y="73" fill="#a5b4fc" fontSize="8" textAnchor="middle">Filter Bounds</text>
+                      {/* Central Body (Flight Controller KK2.1.5) */}
+                      <rect x="110" y="55" width="80" height="50" rx="6" fill="#1e1b4b" stroke="#818cf8" strokeWidth="2" />
+                      <text x="150" y="78" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle">KK2.1.5 FC</text>
+                      <text x="150" y="92" fill="#a5b4fc" fontSize="7" textAnchor="middle">Raspberry Pi Zero</text>
+
+                      {/* 4 Motors (BLDC 1000 RPM/V) */}
+                      <circle cx="50" cy="30" r="16" fill="#311b92" stroke="#6366f1" strokeWidth="2" />
+                      <text x="50" y="33" fill="#fff" fontSize="7" textAnchor="middle">M1</text>
+
+                      <circle cx="250" cy="30" r="16" fill="#311b92" stroke="#6366f1" strokeWidth="2" />
+                      <text x="250" y="33" fill="#fff" fontSize="7" textAnchor="middle">M2</text>
+
+                      <circle cx="50" cy="130" r="16" fill="#311b92" stroke="#6366f1" strokeWidth="2" />
+                      <text x="50" y="133" fill="#fff" fontSize="7" textAnchor="middle">M3</text>
+
+                      <circle cx="250" cy="130" r="16" fill="#311b92" stroke="#6366f1" strokeWidth="2" />
+                      <text x="250" y="133" fill="#fff" fontSize="7" textAnchor="middle">M4</text>
                     </svg>
                   </div>
                   <p className="text-[10px] font-mono text-slate-400 italic">
-                    <strong>Fig. 1.</strong> End-to-end processing pipeline architecture depicting decouple feature extraction and control barrier enforcement.
+                    <strong>Fig. 1.</strong> Experimental Quadcopter Configuration (F450 Frame, 1000 RPM/V BLDC Motors, KK2.1.5 Flight Controller).
                   </p>
                 </div>
               )}
 
-              {/* Dynamically Inject Figure 2 Benchmark Chart into Results section */}
-              {sec.section_name.toLowerCase().includes('results') && (
-                <div className="my-6 p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3 font-sans text-center">
-                  <div className="space-y-2 p-3 bg-slate-900 rounded-lg border border-slate-850">
-                    <div className="flex items-center justify-between text-[11px] font-mono">
-                      <span className="text-slate-400">Baseline Model [1]</span>
-                      <span className="text-slate-300 font-bold">78.2%</span>
-                    </div>
-                    <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-slate-600 rounded-full" style={{ width: '78.2%' }}></div>
-                    </div>
+              {/* PWM Signal Processing Pipeline for Signal/Recreation Section */}
+              {(sec.section_name.toLowerCase().includes('signal') || sec.section_name.toLowerCase().includes('result') || sec.section_name.toLowerCase().includes('recreation')) && (
+                <div className="my-6 p-4 bg-slate-950/90 border border-slate-800 rounded-xl space-y-3 font-sans text-center">
+                  <div className="w-full py-4 flex flex-col items-center justify-center bg-slate-900 rounded-lg border border-slate-850 space-y-3 p-3">
+                    <svg className="w-full max-w-sm h-28 text-indigo-400" viewBox="0 0 360 90">
+                      {/* Transceiver */}
+                      <rect x="10" y="20" width="80" height="45" rx="6" fill="#1e1b4b" stroke="#6366f1" strokeWidth="2" />
+                      <text x="50" y="42" fill="#fff" fontSize="8" fontWeight="bold" textAnchor="middle">Transceiver</text>
+                      <text x="50" y="54" fill="#a5b4fc" fontSize="7" textAnchor="middle">Flysky RX</text>
 
-                    <div className="flex items-center justify-between text-[11px] font-mono pt-2">
-                      <span className="text-indigo-300 font-bold">Our Proposed Model</span>
-                      <span className="text-indigo-400 font-bold">96.7% (+18.5%)</span>
-                    </div>
-                    <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 rounded-full" style={{ width: '96.7%' }}></div>
+                      <line x1="90" y1="42" x2="130" y2="42" stroke="#6366f1" strokeWidth="2" />
+
+                      {/* Arduino UNO */}
+                      <rect x="130" y="20" width="90" height="45" rx="6" fill="#311b92" stroke="#818cf8" strokeWidth="2" />
+                      <text x="175" y="42" fill="#fff" fontSize="8" fontWeight="bold" textAnchor="middle">Arduino UNO</text>
+                      <text x="175" y="54" fill="#c7d2fe" fontSize="7" textAnchor="middle">PWM Pins 3,5,6,9.. (490Hz)</text>
+
+                      <line x1="220" y1="42" x2="260" y2="42" stroke="#6366f1" strokeWidth="2" />
+
+                      {/* RPi Zero */}
+                      <rect x="260" y="20" width="90" height="45" rx="6" fill="#1e1b4b" stroke="#a5b4fc" strokeWidth="2" />
+                      <text x="305" y="42" fill="#fff" fontSize="8" fontWeight="bold" textAnchor="middle">Raspberry Pi Zero</text>
+                      <text x="305" y="54" fill="#a5b4fc" fontSize="7" textAnchor="middle">Python PWM Mimic</text>
+                    </svg>
+
+                    {/* PWM Signal Waveform Simulation Graph */}
+                    <div className="w-full bg-slate-950 p-2.5 rounded-md border border-slate-800 text-[10px] font-mono text-left space-y-1">
+                      <div className="flex justify-between text-indigo-400 font-bold">
+                        <span>Channel 2 (Throttle) Pulse Waveform</span>
+                        <span>490 Hz</span>
+                      </div>
+                      <div className="h-6 flex items-center space-x-1 font-mono text-emerald-400 overflow-hidden">
+                        <span>┌─┐_┌─┐_┌─┐_┌─┐ (1.5ms PWM Duty Cycle = 50% Hover)</span>
+                      </div>
                     </div>
                   </div>
                   <p className="text-[10px] font-mono text-slate-400 italic">
-                    <strong>Fig. 2.</strong> Accuracy comparison showing +18.5% improvement over state-of-the-art baselines.
+                    <strong>Fig. 2.</strong> Block Diagram of Transceiver Signal Acquisition & Microcontroller Emulation Pipeline.
                   </p>
                 </div>
               )}
             </div>
           ))}
         </div>
+
 
         {/* References Bibliography Section */}
         {paper.references && paper.references.length > 0 && (
