@@ -13,6 +13,7 @@ pytest==8.2.2
 gradio==4.44.1
 huggingface_hub<1.0.0
 pymupdf==1.24.2
+spaces
 
 
 
