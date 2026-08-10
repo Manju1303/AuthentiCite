@@ -80,8 +80,13 @@ def generate_full_paper(topic: str, journal_tier: str = "q1_ieee", journal_forma
         "title": paper_json.get("title", f"Research Study on {topic}"),
         "journal_tier": tier_info["name"],
         "sections_count": len(sections_to_add),
-        "references_count": len(refs)
+        "references_count": len(refs),
+        "abstract": paper_json.get("abstract", ""),
+        "keywords": paper_json.get("keywords", ""),
+        "sections": paper_json.get("sections", []),
+        "references": refs
     }
+
 
 def _call_llm_for_paper(prompt: str, topic: str) -> Dict[str, Any]:
     if settings.GEMINI_API_KEY:
