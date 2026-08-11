@@ -342,6 +342,8 @@ class PaperGenerateRequest(BaseModel):
     topic: str
     journal_tier: Optional[str] = "q1_ieee"
     journal_format: Optional[str] = "ieee"
+    author_name: Optional[str] = "Manjunath"
+    author_affiliation: Optional[str] = "Department of Artificial Intelligence and Data Science, JKK Munirajah College of Technology (JKKMCT), Tamil Nadu, India"
 
 @app.get("/api/v1/generator/tiers")
 def get_journal_tiers():
@@ -354,7 +356,9 @@ def generate_paper(request: PaperGenerateRequest):
     return generate_full_paper(
         topic=request.topic,
         journal_tier=request.journal_tier or "q1_ieee",
-        journal_format=request.journal_format or "ieee"
+        journal_format=request.journal_format or "ieee",
+        author_name=request.author_name or "Manjunath",
+        author_affiliation=request.author_affiliation or "Department of Artificial Intelligence and Data Science, JKK Munirajah College of Technology (JKKMCT), Tamil Nadu, India"
     )
 
 @app.get("/api/v1/advisor/{paper_id}")
