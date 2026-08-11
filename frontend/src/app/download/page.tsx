@@ -9,35 +9,35 @@ const JOURNAL_CATEGORIES = [
     id: 'general',
     name: 'General',
     journals: [
-      { id: 'original', name: 'Original Style', icon: '📄', font: 'Preserved', columns: 'Preserved', spacing: 'Preserved', description: 'Restores the exact document margin, spacing, run alignments, and font sizes captured during parsing.' }
+      { id: 'original', name: 'Original Style', icon: '', font: 'Preserved', columns: 'Preserved', spacing: 'Preserved', description: 'Restores the exact document margin, spacing, run alignments, and font sizes captured during parsing.' }
     ]
   },
   {
     id: 'engineering_cs',
     name: 'Engineering & CS',
     journals: [
-      { id: 'ieee', name: 'IEEE Journal', icon: '🎓', font: 'Times New Roman 10pt', columns: '2 Columns', spacing: 'Single Space', description: 'Applies official IEEE rules: Times New Roman, centered titles, abstract block indents, and double-column body text.' },
-      { id: 'springer', name: 'Springer LNCS', icon: '📚', font: 'Times New Roman 10pt', columns: '1 Column', spacing: 'Single Space', description: 'Formats to Springer Lecture Notes guidelines: single-column layout, custom margins, and decimal section numbers.' },
-      { id: 'journal_of_the_acm', name: 'Journal of the ACM', icon: '💻', font: 'Times New Roman 10pt', columns: '1 Column', spacing: '1.15 Space', description: 'Official JACM single-column, single-spaced Times New Roman, justified layout with decimal section numbering.' },
-      { id: 'nature_machine_intelligence', name: 'Nature Machine Intelligence', icon: '🤖', font: 'Arial 9pt', columns: '2 Columns', spacing: 'Single Space', description: 'Nature style double-column layout using Arial font, compact margins, and clean sans-serif headings.' }
+      { id: 'ieee', name: 'IEEE Journal', icon: '', font: 'Times New Roman 10pt', columns: '2 Columns', spacing: 'Single Space', description: 'Applies official IEEE rules: Times New Roman, centered titles, abstract block indents, and double-column body text.' },
+      { id: 'springer', name: 'Springer LNCS', icon: '', font: 'Times New Roman 10pt', columns: '1 Column', spacing: 'Single Space', description: 'Formats to Springer Lecture Notes guidelines: single-column layout, custom margins, and decimal section numbers.' },
+      { id: 'journal_of_the_acm', name: 'Journal of the ACM', icon: '', font: 'Times New Roman 10pt', columns: '1 Column', spacing: '1.15 Space', description: 'Official JACM single-column, single-spaced Times New Roman, justified layout with decimal section numbering.' },
+      { id: 'nature_machine_intelligence', name: 'Nature Machine Intelligence', icon: '', font: 'Arial 9pt', columns: '2 Columns', spacing: 'Single Space', description: 'Nature style double-column layout using Arial font, compact margins, and clean sans-serif headings.' }
     ]
   },
   {
     id: 'business_mgmt',
     name: 'Business & Management',
     journals: [
-      { id: 'management_science', name: 'Management Science', icon: '📈', font: 'Times New Roman 11pt', columns: '1 Column', spacing: '1.5 Space', description: 'Formats to Management Science style: Times New Roman, 1.5 spacing, abstract indent, and decimal section numbering.' },
-      { id: 'academy_of_management_journal', name: 'Academy of Management Journal (AMJ)', icon: '🏢', font: 'Times New Roman 12pt', columns: '1 Column', spacing: 'Double Space', description: 'AMJ style: Times New Roman 12pt, double-spaced (2.0), left aligned with centered bold Level 1 headings.' },
-      { id: 'strategic_management_journal', name: 'Strategic Management Journal (SMJ)', icon: '🎯', font: 'Times New Roman 11pt', columns: '1 Column', spacing: 'Double Space', description: 'SMJ format: Times New Roman, double-spaced (2.0), left aligned with flush left italic subheadings.' },
-      { id: 'harvard_business_review', name: 'Harvard Business Review (HBR)', icon: '💼', font: 'Calibri 11pt', columns: '1 Column', spacing: '1.15 Space', description: 'HBR executive style: Calibri, 1.15 spacing, left-aligned title/body, paragraph spacing, and bold sans-serif headers.' }
+      { id: 'management_science', name: 'Management Science', icon: '', font: 'Times New Roman 11pt', columns: '1 Column', spacing: '1.5 Space', description: 'Formats to Management Science style: Times New Roman, 1.5 spacing, abstract indent, and decimal section numbering.' },
+      { id: 'academy_of_management_journal', name: 'Academy of Management Journal (AMJ)', icon: '', font: 'Times New Roman 12pt', columns: '1 Column', spacing: 'Double Space', description: 'AMJ style: Times New Roman 12pt, double-spaced (2.0), left aligned with centered bold Level 1 headings.' },
+      { id: 'strategic_management_journal', name: 'Strategic Management Journal (SMJ)', icon: '', font: 'Times New Roman 11pt', columns: '1 Column', spacing: 'Double Space', description: 'SMJ format: Times New Roman, double-spaced (2.0), left aligned with flush left italic subheadings.' },
+      { id: 'harvard_business_review', name: 'Harvard Business Review (HBR)', icon: '', font: 'Calibri 11pt', columns: '1 Column', spacing: '1.15 Space', description: 'HBR executive style: Calibri, 1.15 spacing, left-aligned title/body, paragraph spacing, and bold sans-serif headers.' }
     ]
   },
   {
     id: 'sciences',
     name: 'General Sciences',
     journals: [
-      { id: 'nature', name: 'Nature', icon: '🧬', font: 'Arial 9pt', columns: '2 Columns', spacing: 'Single Space', description: 'Nature format: double-column body text, Arial font, justified alignment, compact margins, and bold sans-serif headings.' },
-      { id: 'science', name: 'Science', icon: '🧪', font: 'Times New Roman 9pt', columns: '2 Columns', spacing: 'Single Space', description: 'Science layout: double-column body text, Times New Roman, justified alignment, compact margins, and bold centered headers.' }
+      { id: 'nature', name: 'Nature', icon: '', font: 'Arial 9pt', columns: '2 Columns', spacing: 'Single Space', description: 'Nature format: double-column body text, Arial font, justified alignment, compact margins, and bold sans-serif headings.' },
+      { id: 'science', name: 'Science', icon: '', font: 'Times New Roman 9pt', columns: '2 Columns', spacing: 'Single Space', description: 'Science layout: double-column body text, Times New Roman, justified alignment, compact margins, and bold centered headers.' }
     ]
   }
 ];
@@ -237,7 +237,7 @@ function DownloadContent() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 bg-slate-950 border border-slate-900 rounded-xl text-xs font-medium text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-600 transition-all font-sans"
             />
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] select-none pointer-events-none">🔍</span>
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] select-none pointer-events-none">Search</span>
           </div>
         </div>
 
@@ -293,7 +293,6 @@ function DownloadContent() {
 
         {filteredJournals.length === 0 && (
           <div className="text-center py-12 bg-slate-900/10 border border-slate-900 rounded-2xl">
-            <span className="text-2xl block mb-2">📂</span>
             <p className="text-slate-550 font-bold text-xs uppercase tracking-wider">No layout templates match search.</p>
           </div>
         )}
@@ -358,19 +357,19 @@ function DownloadContent() {
                 download
                 className="px-4 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white font-bold text-xs rounded-xl tracking-wide uppercase transition-all flex items-center justify-center gap-1.5"
               >
-                📥 Word (DOCX)
+                Word (DOCX)
               </a>
               <button
                 onClick={handleDownloadPDF}
                 className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl tracking-wide uppercase transition-all flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/10"
               >
-                📥 PDF Document
+                PDF Document
               </button>
             </div>
 
             {pdfError && (
               <div className="p-3.5 bg-amber-500/[0.02] border border-amber-500/10 text-amber-300 rounded-xl text-[10px] leading-relaxed space-y-1">
-                <span className="font-bold text-[9px] uppercase tracking-wide">⚠️ PDF Rendering Support:</span>
+                <span className="font-bold text-[9px] uppercase tracking-wide">PDF Rendering Support:</span>
                 <p>
                   On-the-fly PDF conversion requires LibreOffice dependencies configured on your host server.
                 </p>

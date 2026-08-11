@@ -88,7 +88,7 @@ export const CompareView: React.FC<CompareViewProps> = ({ section, onUpdate }) =
           />
           {hasWarnings && (
             <div className="p-3 bg-amber-500/[0.02] border border-amber-500/10 rounded-xl text-[10px] text-amber-350 space-y-1">
-              <span className="font-bold uppercase text-[9px]">⚠️ Quality Alerts:</span>
+              <span className="font-bold uppercase text-[9px]">Quality Alerts:</span>
               <ul className="list-disc list-inside space-y-0.5 text-slate-400">
                 {section.layout_metadata.quality_warnings?.map((w, idx) => (
                   <li key={idx}>{w}</li>

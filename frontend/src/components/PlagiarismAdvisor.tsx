@@ -58,7 +58,6 @@ export const PlagiarismAdvisor: React.FC<PlagiarismAdvisorProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="text-xl">🛡️</span>
             <h3 className="text-base font-extrabold text-white font-mono">Plagiarism Reduction Advisor</h3>
           </div>
           <p className="text-xs text-slate-400 mt-1 max-w-xl">{advice.strategy_summary}</p>
@@ -109,7 +108,7 @@ export const PlagiarismAdvisor: React.FC<PlagiarismAdvisorProps> = ({
 
               <div className="space-y-1.5">
                 <div className="text-[11px] font-semibold text-slate-200 flex items-center space-x-1.5">
-                  <span>💡 Recommended Action:</span>
+                  <span>Recommended Action:</span>
                   <span className="text-indigo-300 font-bold">{rec.recommended_action}</span>
                 </div>
                 <ul className="list-disc list-inside text-[11px] text-slate-400 space-y-0.5 pl-1">

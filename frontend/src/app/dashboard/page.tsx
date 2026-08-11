@@ -132,7 +132,7 @@ function DashboardContent() {
                   : 'bg-slate-900 border border-slate-800 text-rose-400 hover:bg-slate-850'
               }`}
             >
-              <span>🛡️ Reduction Advisor</span>
+              <span>Reduction Advisor</span>
             </button>
             <button
               onClick={() => setShowRAG(!showRAG)}
@@ -142,7 +142,7 @@ function DashboardContent() {
                   : 'bg-slate-900 border border-slate-800 text-indigo-400 hover:bg-slate-850'
               }`}
             >
-              <span>🧠 RAG Assistant</span>
+              <span>RAG Assistant</span>
             </button>
             {!isAnalyzed ? (
               <button

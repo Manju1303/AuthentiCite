@@ -62,7 +62,7 @@ export default function AcademicPaperViewer({ paper, onOpenWorkspace }: Academic
             onClick={() => setLayoutMode(layoutMode === 'two-column' ? 'single-column' : 'two-column')}
             className="px-3 py-2 bg-slate-950 border border-slate-800 hover:bg-slate-850 text-slate-300 font-semibold text-xs rounded-xl transition-all flex items-center space-x-1.5"
           >
-            <span>{layoutMode === 'two-column' ? '📖 Single Column' : '📰 IEEE Two Column'}</span>
+            <span>{layoutMode === 'two-column' ? 'Single Column' : 'IEEE Two Column'}</span>
           </button>
 
           {/* Copy Markdown */}
@@ -70,7 +70,7 @@ export default function AcademicPaperViewer({ paper, onOpenWorkspace }: Academic
             onClick={handleCopyMarkdown}
             className="px-3 py-2 bg-slate-950 border border-slate-800 hover:bg-slate-850 text-slate-300 font-semibold text-xs rounded-xl transition-all flex items-center space-x-1.5"
           >
-            <span>{copied ? '✅ Copied!' : '📋 Copy Text'}</span>
+            <span>{copied ? 'Copied!' : 'Copy Text'}</span>
           </button>
 
           {/* Download Buttons */}
@@ -79,7 +79,7 @@ export default function AcademicPaperViewer({ paper, onOpenWorkspace }: Academic
             download
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl tracking-wide uppercase transition-all shadow-md shadow-indigo-600/20 flex items-center space-x-1.5"
           >
-            <span>📥 DOCX</span>
+            <span>DOCX</span>
           </a>
 
           <a
@@ -87,7 +87,7 @@ export default function AcademicPaperViewer({ paper, onOpenWorkspace }: Academic
             download
             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl tracking-wide uppercase transition-all flex items-center space-x-1.5"
           >
-            <span>📄 PDF</span>
+            <span>PDF</span>
           </a>
 
           {onOpenWorkspace && (
@@ -95,7 +95,7 @@ export default function AcademicPaperViewer({ paper, onOpenWorkspace }: Academic
               onClick={() => onOpenWorkspace(paper.paper_id)}
               className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl tracking-wide uppercase transition-all shadow-md shadow-violet-600/20 flex items-center space-x-1.5"
             >
-              <span>🛡️ Plagiarism Advisor →</span>
+              <span>Plagiarism Advisor</span>
             </button>
           )}
         </div>
