@@ -58,7 +58,8 @@ def parse_pdf(file_path: str, media_dir: str = "uploads/media") -> Dict[str, Any
         # 1. Extract images in the page
         try:
             for image_file_object in page.images:
-                image_ext = os.path.splitext(image_file_object.name)[1].strip(".") or "png"
+                img_name_val = getattr(image_file_object, "name", None) or f"image_{uuid.uuid4().hex}"
+                image_ext = os.path.splitext(img_name_val)[1].strip(".") or "png"
                 image_name = f"pdf_img_{page_num}_{uuid.uuid4().hex}.{image_ext}"
                 dest_path = os.path.join(media_dir, image_name)
                 with open(dest_path, "wb") as f:
