@@ -33,9 +33,15 @@ export default function Home() {
             >
               <span>Paper Generator</span>
             </button>
-            <span className="px-3 py-1 rounded-full bg-slate-900/60 text-[10px] font-semibold text-slate-400 border border-slate-800/80">
-              v1.0.0
-            </span>
+            <button
+              onClick={() => {
+                localStorage.removeItem('isAuthenticated');
+                router.push('/login');
+              }}
+              className="px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-slate-300 font-bold text-xs rounded-xl tracking-wide uppercase transition-all"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </header>

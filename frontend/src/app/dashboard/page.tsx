@@ -104,10 +104,22 @@ function DashboardContent() {
               AuthentiCite
             </span>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="px-3 py-1 rounded-full bg-slate-900/60 text-[10px] font-semibold text-slate-450 border border-slate-800/80">
-              Analysis Space
-            </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/')}
+              className="px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-855 text-slate-300 font-bold text-xs rounded-xl tracking-wide uppercase transition-all"
+            >
+              Back to Home
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem('isAuthenticated');
+                router.push('/login');
+              }}
+              className="px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-855 text-slate-300 font-bold text-xs rounded-xl tracking-wide uppercase transition-all"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </header>
