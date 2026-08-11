@@ -7,6 +7,7 @@ DB_PATH = settings.DATABASE_URL.replace("sqlite:///", "")
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -176,3 +177,20 @@ def get_paper_references(paper_id: str):
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+def update_reference(ref_id: str, raw_reference: str, citation_key: str = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if citation_key:
+        cursor.execute(
+            "UPDATE references_list SET raw_reference = ?, citation_key = ? WHERE id = ?",
+            (raw_reference, citation_key, ref_id)
+        )
+    else:
+        cursor.execute(
+            "UPDATE references_list SET raw_reference = ? WHERE id = ?",
+            (raw_reference, ref_id)
+        )
+    conn.commit()
+    conn.close()
+

@@ -1,8 +1,11 @@
 import os
 import uuid
 import re
+import logging
 from pypdf import PdfReader
 from typing import List, Dict, Any
+
+logger = logging.getLogger(__name__)
 
 def parse_pdf(file_path: str, media_dir: str = "uploads/media") -> Dict[str, Any]:
     """
@@ -76,7 +79,7 @@ def parse_pdf(file_path: str, media_dir: str = "uploads/media") -> Dict[str, Any
                 })
                 element_index += 1
         except Exception as e:
-            print(f"Error extracting images from PDF: {e}")
+            logger.error(f"Error extracting images from PDF: {e}", exc_info=True)
 
         # 2. Extract and segment text
         text = page.extract_text()

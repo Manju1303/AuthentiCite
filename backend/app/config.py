@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     OLLAMA_API_URL: str = Field(default="http://localhost:11434", validation_alias="OLLAMA_API_URL")
     OLLAMA_MODEL: str = Field(default="qwen2.5:32b", validation_alias="OLLAMA_MODEL")
     CLAUDE_MODEL: str = Field(default="claude-3-5-sonnet-20241022", validation_alias="CLAUDE_MODEL")
+    GEMINI_MODEL: str = Field(default="gemini-2.5-flash", validation_alias="GEMINI_MODEL")
+    DEEPSEEK_MODEL: str = Field(default="deepseek-chat", validation_alias="DEEPSEEK_MODEL")
     LLM_TEMPERATURE: float = Field(default=0.2, validation_alias="LLM_TEMPERATURE")
     MAX_TOKENS: int = Field(default=4096, validation_alias="MAX_TOKENS")
     
@@ -25,6 +27,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = Field(default="", validation_alias="GEMINI_API_KEY")
     DEEPSEEK_API_KEY: str = Field(default="", validation_alias="DEEPSEEK_API_KEY")
     ANTHROPIC_API_KEY: str = Field(default="", validation_alias="ANTHROPIC_API_KEY")
+    SEMANTIC_SCHOLAR_API_KEY: str = Field(default="", validation_alias="SEMANTIC_SCHOLAR_API_KEY")
     
     # Similarity settings
     SIMILARITY_THRESHOLD: float = Field(default=0.20, validation_alias="SIMILARITY_THRESHOLD")

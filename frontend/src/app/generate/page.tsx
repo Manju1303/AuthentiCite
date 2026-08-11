@@ -97,11 +97,11 @@ export default function GeneratePaperPage() {
               onChange={(e) => setJournalTier(e.target.value)}
               className="w-full px-4 py-3.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-indigo-500 font-sans"
             >
-              <option value="q1_ieee">🏆 Q1: IEEE Transactions (Two-Column, Numeric Citations)</option>
-              <option value="q1_nature">⭐ Q1: Nature / Springer (Single Column, Author-Year Citations)</option>
-              <option value="q2_elsevier">📊 Q2: Elsevier ScienceDirect Journal Profile</option>
-              <option value="q3_acm">💻 Q3: ACM Computing Surveys Profile</option>
-              <option value="q4_standard">📄 Q4: International Standard Academic Profile</option>
+               <option value="q1_ieee">Q1: IEEE Transactions (Two-Column, Numeric Citations)</option>
+              <option value="q1_nature">Q1: Nature / Springer (Single Column, Author-Year Citations)</option>
+              <option value="q2_elsevier">Q2: Elsevier ScienceDirect Journal Profile</option>
+              <option value="q3_acm">Q3: ACM Computing Surveys Profile</option>
+              <option value="q4_standard">Q4: International Standard Academic Profile</option>
             </select>
           </div>
 

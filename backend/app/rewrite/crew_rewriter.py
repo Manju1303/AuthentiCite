@@ -14,7 +14,7 @@ def get_crew_llm():
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
             return ChatGoogleGenerativeAI(
-                model="gemini-2.5-flash",
+                model=settings.GEMINI_MODEL,
                 google_api_key=settings.GEMINI_API_KEY,
                 temperature=0.2
             )
@@ -25,7 +25,7 @@ def get_crew_llm():
         try:
             from langchain_openai import ChatOpenAI
             return ChatOpenAI(
-                model="deepseek-chat",
+                model=settings.DEEPSEEK_MODEL,
                 openai_api_key=settings.DEEPSEEK_API_KEY,
                 openai_api_base="https://api.deepseek.com/v1",
                 temperature=0.2
@@ -75,12 +75,12 @@ def rewrite_text_with_crew(
     
     # 1. Define Agents
     researcher = Agent(
-        role="Senior Academic Research Scholar",
-        goal="Identify and preserve formulas, citations, and critical facts in the paragraph.",
+        role="Principal Academic Formatting & Structural Analyst",
+        goal="Identify, index, and protect all mathematical formulas, LaTeX code, scientific variables, and citation brackets.",
         backstory=(
-            "You are an expert in academic formatting. Your primary job is to extract citation brackets "
-            "like [1], [2-5], (Smith, 2021) and LaTeX math expressions, ensuring they are highlighted "
-            "and preserved in their exact original form."
+            "You are a meticulous scholar specializing in academic structure and typesetting standards. Your primary objective "
+            "is to catalog citation markers (e.g., [1], [2-5], or (Smith, 2021)) and LaTeX equations/symbols in the target paragraph. "
+            "You map their exact positions to guarantee they are never corrupted, altered, or omitted during the editing process."
         ),
         verbose=False,
         allow_delegation=False,
@@ -88,12 +88,13 @@ def rewrite_text_with_crew(
     )
     
     editor = Agent(
-        role="Professional Scientific Copyeditor",
-        goal="Rewrite text blocks in an elegant academic tone while removing similarity patterns.",
+        role="Senior Scientific Copyeditor & Rhetoric Specialist",
+        goal="Restructure paragraphs using advanced scientific vocabulary and seamless transitions while reducing similarity scores.",
         backstory=(
-            "You are a master of academic composition. You restructure sentences, vary vocabulary, and "
-            "re-order thoughts to ensure zero plagiarism. You use the provided context to ensure transitions "
-            "flow seamlessly, but you ONLY output the rewritten paragraph."
+            "You are a master of academic rhetoric and English composition. You transform wordy, passive, or repetitive drafts "
+            "into crisp, elegant, and precise academic prose. You replace generic words with active scientific verbs, optimize sentence "
+            "lengths, and ensure the narrative transitions naturally from the preceding paragraph (Context Before) and into the succeeding "
+            "paragraph (Context After). You output ONLY the rewritten paragraph, matching the surrounding tone and pronouns."
         ),
         verbose=False,
         allow_delegation=False,
@@ -101,12 +102,13 @@ def rewrite_text_with_crew(
     )
     
     reviewer = Agent(
-        role="Journal Peer Reviewer",
-        goal="Verify that the rewritten paragraph is factual, academically sound, and preserves all original citations/formulas.",
+        role="Journal Editor-in-Chief & Peer Review Coordinator",
+        goal="Enforce rigorous academic styling, context alignment, and formula/citation preservation on the final draft.",
         backstory=(
-            "You are a meticulous reviewer. You compare the final rewrite against the original text. "
-            "If any citation key or mathematical formula was altered or omitted, you inject it back "
-            "in place. You output ONLY the final rewritten paragraph text."
+            "You are a strict journal editor who ensures that all manuscripts meet the absolute highest standards of clarity, "
+            "academic alignment, and formatting accuracy. You verify that the rewritten text transitions smoothly within the "
+            "surrounding context, corrects any grammatical shifts, and contains every cataloged citation and mathematical expression "
+            "exactly as they appeared in the original text. You output ONLY the final, polished paragraph without markdown wraps or meta-text."
         ),
         verbose=False,
         allow_delegation=False,
@@ -116,33 +118,41 @@ def rewrite_text_with_crew(
     # 2. Define Tasks
     analyze_task = Task(
         description=(
-            f"Analyze this paragraph: '{text}'\n"
-            "List all citation brackets and LaTeX math equations that must remain completely unchanged."
+            f"Analyze this target paragraph: '{text}'\n"
+            "Identify, list, and note the exact positions of all citation markers, inline/block LaTeX equations, and mathematical variables. "
+            "Create a strict protection map for the editor to follow."
         ),
-        expected_output="A list of citations and equations to preserve.",
+        expected_output="A structured list of citation markers and LaTeX mathematical segments to preserve.",
         agent=researcher
     )
     
     rewrite_task = Task(
         description=(
-            f"Rewrite the input paragraph: '{text}'\n"
-            "Aim to reduce plagiarism below {target_similarity * 100}%. Make sentences formal and concise.\n"
-            f"Context Before: '{context_before}'\n"
-            f"Context After: '{context_after}'\n"
-            "Use Researcher list to preserve all citations and equations exactly."
+            f"Rewrite this paragraph to improve academic style and reduce similarity below {target_similarity * 100}%:\n"
+            f"'{text}'\n\n"
+            f"Surrounding Context to Align with:\n"
+            f"- Context Before: '{context_before}'\n"
+            f"- Context After: '{context_after}'\n\n"
+            "Guidelines:\n"
+            "1. Use active, robust scientific vocabulary. Avoid passive voice, conversational phrasing, or generic verbs.\n"
+            "2. Ensure the text flows seamlessly between the 'Context Before' and 'Context After' paragraphs (match tenses, pronouns, and narrative tone).\n"
+            "3. Reference the protected elements list from the researcher to keep all citations and equations perfectly intact."
         ),
-        expected_output="The rewritten paragraph text only. Do not wrap in markdown or add commentary.",
+        expected_output="The rewritten paragraph text only. Do not add markdown blocks, comments, or quotes.",
         agent=editor
     )
     
     review_task = Task(
         description=(
-            f"Review this draft against the original paragraph: '{text}'.\n"
-            "Verify all citations [1] and math equations are intact. Correct any formatting mistakes.\n"
-            "Output ONLY the final, polished paragraph. No commentary, markdown backticks, or intro padding."
+            f"Conduct a peer review of the rewritten paragraph against the original paragraph: '{text}'.\n"
+            "Check for:\n"
+            "1. Absolute preservation of all original citation brackets and LaTeX formulas.\n"
+            "2. Logical and seamless transitions with the surrounding context (Before: '{context_before}' | After: '{context_after}').\n"
+            "3. Refined academic tone, vocabulary density, and active voice.\n\n"
+            "If any citation, formula, or transition transition is compromised, restore it. Output ONLY the raw paragraph text."
         ),
-        expected_output="The final polished paragraph text.",
-        agent=reviewer
+        expected_output="The final polished paragraph text. No markdown backticks, conversational introductions, or summary notes."
+        ,agent=reviewer
     )
     
     # 3. Assemble and Kickoff Crew

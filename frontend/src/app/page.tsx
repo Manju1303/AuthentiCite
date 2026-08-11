@@ -31,7 +31,7 @@ export default function Home() {
               onClick={() => router.push('/generate')}
               className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs rounded-xl tracking-wide uppercase transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-1.5"
             >
-              <span>📝 Paper Generator</span>
+              <span>Paper Generator</span>
             </button>
             <span className="px-3 py-1 rounded-full bg-slate-900/60 text-[10px] font-semibold text-slate-400 border border-slate-800/80">
               v1.0.0

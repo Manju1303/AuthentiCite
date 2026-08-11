@@ -25,23 +25,28 @@ def generate_full_paper(topic: str, journal_tier: str = "q1_ieee", journal_forma
 
     # Multi-section generation prompt
     prompt = (
-        f"You are a distinguished research professor writing a Q1 academic paper on the topic:\n"
+        f"You are a distinguished research professor writing a high-tier Q1 peer-reviewed paper on the topic:\n"
         f"TOPIC: {topic}\n"
-        f"JOURNAL FORMAT: {tier_info['name']}\n\n"
-        f"Generate a full research paper formatted with JSON output containing an array of sections:\n"
-        f"Required keys in JSON object:\n"
-        f"- 'title': Research Paper Title\n"
-        f"- 'abstract': Concise Abstract (150-250 words)\n"
-        f"- 'keywords': 4-6 comma-separated keywords\n"
-        f"- 'sections': List of objects with 'section_name' and 'content' for:\n"
-        f"   1. I. INTRODUCTION\n"
-        f"   2. II. LITERATURE REVIEW & RELATED WORK\n"
-        f"   3. III. PROPOSED METHODOLOGY & MATHEMATICAL FORMULATION\n"
-        f"   4. IV. EXPERIMENTAL RESULTS & PERFORMANCE EVALUATION\n"
-        f"   5. V. DISCUSSION & COMPARATIVE ANALYSIS\n"
-        f"   6. VI. CONCLUSION & FUTURE DIRECTIONS\n"
-        f"- 'references': Array of 5 academic citations formatted appropriately.\n"
-        f"IMPORTANT: Respond ONLY with valid JSON."
+        f"TARGET JOURNAL STYLE: {tier_info['name']} ({tier_info['style']} formatting, {tier_info['citation_style']} citations)\n\n"
+        f"Generate a complete, publication-ready research paper. Use sophisticated scientific vocabulary, precise active verbs, "
+        "and clear logical flow. Avoid conversational padding or qualitative fluff. Follow these strict styling directives:\n"
+        f"1. CITATIONS: Generate exactly 5 relevant, realistic references in the bibliography array, and cite them inside the text "
+        f"using the target style: {'use brackets like [1], [2] for numeric' if tier_info['citation_style'] == 'numeric' else 'use author-year format like (Smith, 2021) or Smith et al. (2021)'}. Make sure citations are aligned and distributed naturally throughout the sections.\n"
+        "2. MATHEMATICAL FORMULAS: Incorporate relevant mathematical equations, algorithms, or statistical formulations in the Methodology section using LaTeX syntax (e.g., inline '$...$' or block '$$...$$'). Ensure all variables are defined.\n"
+        "3. COHESIVE NARRATIVE FLOW: Ensure each section transitions logically to the next, maintaining consistent tense, perspective, and depth of analysis.\n\n"
+        "Generate the paper formatted as a JSON object with the following key-value structure:\n"
+        "- 'title': A formal, academic research paper title.\n"
+        "- 'abstract': A highly structured, informative abstract (150-250 words) outlining background, methodology, results, and significance.\n"
+        "- 'keywords': 4-6 comma-separated index terms.\n"
+        "- 'sections': An array of objects, each containing 'section_name' and 'content' for the following sections:\n"
+        "   1. I. INTRODUCTION (context, research gap, objectives, paper outline)\n"
+        "   2. II. LITERATURE REVIEW & RELATED WORK (synthesized discussion of historical/state-of-the-art literature)\n"
+        "   3. III. PROPOSED METHODOLOGY & MATHEMATICAL FORMULATION (detailed framework, equations, system design)\n"
+        "   4. IV. EXPERIMENTAL RESULTS & PERFORMANCE EVALUATION (quantitative metrics, baseline comparisons, simulation setup)\n"
+        "   5. V. DISCUSSION & COMPARATIVE ANALYSIS (implications, theoretical significance, limitations)\n"
+        "   6. VI. CONCLUSION & FUTURE DIRECTIONS (key findings summary and future scopes)\n"
+        "- 'references': Array of 5 academic citations formatted matching the target style.\n\n"
+        "IMPORTANT: Respond ONLY with valid, raw JSON. Do not include markdown code block wraps (` ```json ` or similar) or any text outside of the JSON structure."
     )
 
     paper_json = _call_llm_for_paper(prompt, topic)
@@ -91,7 +96,7 @@ def generate_full_paper(topic: str, journal_tier: str = "q1_ieee", journal_forma
 def _call_llm_for_paper(prompt: str, topic: str) -> Dict[str, Any]:
     if settings.GEMINI_API_KEY:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={settings.GEMINI_API_KEY}"
             headers = {"Content-Type": "application/json"}
             payload = {
                 "contents": [{"parts": [{"text": prompt}]}],

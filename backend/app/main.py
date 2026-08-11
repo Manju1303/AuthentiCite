@@ -28,6 +28,10 @@ from backend.app.rewrite import rewrite_text
 from backend.app.quality import check_academic_quality
 from backend.app.rebuild import rebuild_document
 from backend.app.export.exporter import convert_docx_to_pdf
+from backend.app.similarity.citation_resolver import resolve_and_format_citation
+from backend.app.similarity.pipeline_worker import run_autonomous_pipeline
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -46,7 +50,11 @@ app.add_middleware(
 )
 
 @app.post("/api/v1/papers/upload", response_model=PaperResponse)
-async def upload_paper(file: UploadFile = File(...)):
+async def upload_paper(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    journal_format: str = Query("ieee")
+):
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in [".docx", ".pdf"]:
         raise HTTPException(status_code=400, detail="Only DOCX and PDF files are supported.")
@@ -59,37 +67,28 @@ async def upload_paper(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
         
     try:
-        # Create paper record in DB
+        # Create paper record in DB with queued status
         db.create_paper(paper_id, file.filename, ext.strip("."))
+        db.update_paper_status(paper_id, "queued")
         
-        # Parse document structure
-        parsed_data = parse_document(temp_path, media_dir=os.path.join(settings.UPLOAD_DIR, "media"))
-        
-        # Add sections to DB
-        sections_to_add = []
-        for sec in parsed_data["sections"]:
-            sec["paper_id"] = paper_id
-            sections_to_add.append(sec)
-            
-        if sections_to_add:
-            db.add_sections(sections_to_add)
-            
-        # Add references to DB
-        if parsed_data["references"]:
-            db.add_references(paper_id, parsed_data["references"])
-            
-        # Save embeddings for future similarity searches against other uploads
-        save_section_embeddings(paper_id, sections_to_add)
-        
-        db.update_paper_status(paper_id, "parsed")
+        # Hand off process to the autonomous pipeline background worker
+        background_tasks.add_task(
+            run_autonomous_pipeline,
+            paper_id=paper_id,
+            temp_path=temp_path,
+            journal_format=journal_format
+        )
         
         return db.get_paper(paper_id)
     except Exception as e:
         # Clean up on failure
         if os.path.exists(temp_path):
-            os.remove(temp_path)
+            try:
+                os.remove(temp_path)
+            except:
+                pass
         db.update_paper_status(paper_id, f"error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to process document: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to queue document: {str(e)}")
 
 @app.get("/api/v1/papers", response_model=List[PaperResponse])
 def get_papers():
@@ -230,6 +229,41 @@ def rebuild_paper_docx(paper_id: str, request: PaperRewriteRequest):
         return {"filename": output_filename, "format": "docx"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to rebuild document: {str(e)}")
+
+@app.post("/api/v1/papers/{paper_id}/resolve-references")
+async def resolve_references_endpoint(
+    paper_id: str, 
+    style: str = Query("numeric", enum=["numeric", "author_year"])
+):
+    paper = db.get_paper(paper_id)
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found.")
+        
+    references = db.get_paper_references(paper_id)
+    if not references:
+        return {"message": "No references found to resolve."}
+        
+    resolved_count = 0
+    for idx, ref in enumerate(references):
+        # Query Semantic Scholar to resolve metadata and format the citation
+        res = await resolve_and_format_citation(
+            raw_reference=ref["raw_reference"],
+            style=style,
+            citation_idx=idx + 1
+        )
+        
+        # If resolved, update the database row with formatted text and DOI as citation key
+        if res["resolved"]:
+            cit_key = f"DOI: {res['doi']}" if res["doi"] else ref["citation_key"]
+            db.update_reference(ref["id"], res["formatted_reference"], cit_key)
+            resolved_count += 1
+            
+    return {
+        "message": f"Successfully resolved and formatted {resolved_count} of {len(references)} references.",
+        "resolved_count": resolved_count,
+        "total_count": len(references)
+    }
+
 
 @app.get("/api/v1/papers/{paper_id}/download")
 def download_rebuilt_file(paper_id: str, file_format: str = Query("docx", enum=["docx", "pdf"])):

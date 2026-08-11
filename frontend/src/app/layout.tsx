@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AuthGuard from "@/components/AuthGuard";
 
 export const metadata: Metadata = {
   title: "AuthentiCite - Academic Paper Rewriter & Similarity Analyzer",
@@ -14,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased dark">
       <body className="font-sans min-h-full flex flex-col bg-slate-950 text-slate-100">
-        {children}
+        <AuthGuard>{children}</AuthGuard>
       </body>
     </html>
   );

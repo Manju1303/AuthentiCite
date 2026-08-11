@@ -3,7 +3,33 @@ import json
 from typing import Dict, Any, Optional
 from backend.app.config import settings
 
+from backend.app.similarity.sanitizer import sanitize_text, desanitize_text
+
 def rewrite_text(
+    text: str, 
+    context_before: str = "", 
+    context_after: str = "", 
+    target_similarity: float = 0.15
+) -> str:
+    """
+    Wrapper that sanitizes PII (emails, phone numbers, IPs) before sending to LLMs,
+    and restores them in the final output.
+    """
+    sanitized_text, mask_map = sanitize_text(text)
+    sanitized_before, before_map = sanitize_text(context_before)
+    mask_map.update(before_map)
+    sanitized_after, after_map = sanitize_text(context_after)
+    mask_map.update(after_map)
+    
+    result = _rewrite_text_internal(
+        text=sanitized_text,
+        context_before=sanitized_before,
+        context_after=sanitized_after,
+        target_similarity=target_similarity
+    )
+    return desanitize_text(result, mask_map)
+
+def _rewrite_text_internal(
     text: str, 
     context_before: str = "", 
     context_after: str = "", 
@@ -15,14 +41,14 @@ def rewrite_text(
     """
     # System prompt to guide the rewriter
     system_instruction = (
-        "You are an expert academic paper editor. Your task is to rewrite the input paragraph to reduce plagiarism/similarity "
-        f"and improve academic tone, aiming for a similarity index below {target_similarity * 100}%. "
-        "Adhere to the following rules:\n"
-        "1. PRESERVE ALL CITATIONS EXACTLY. Do not modify or remove any citation brackets like [1], [2-5], or (Smith, 2021).\n"
-        "2. PRESERVE MATH EQUATIONS AND FORMULAS EXACTLY. Do not touch LaTeX blocks, subscripts, or mathematical expressions.\n"
-        "3. MAINTAIN MEANING: Do not hallucinate or change facts, numbers, or findings.\n"
-        "4. ACADEMIC TONE: Use formal, precise, and concise scientific vocabulary. Improve flow and readability.\n"
-        "5. ONLY return the rewritten paragraph text. Do NOT add conversational padding, warnings, explanations, or quotes."
+        "You are a principal editor for high-impact academic journals. Your task is to rewrite the input paragraph to eliminate plagiarism/similarity "
+        f"and elevate the academic writing style, target a similarity index below {target_similarity * 100}%. "
+        "Strictly adhere to these requirements:\n"
+        "1. PRESERVE ALL CITATIONS AND BRACKETS EXACTLY: Do not alter, delete, or reorder citation keys (e.g., [1], [2-5], or (Smith, 2021)). Keep them in their exact relative positions.\n"
+        "2. PRESERVE MATH & FORMULAS: Keep LaTeX expressions, variables, mathematical symbols, equations, and sub/superscripts completely intact.\n"
+        "3. HIGH-IMPACT SCIENTIFIC TONE: Employ precise, domain-specific terminology. Avoid vague verbs (e.g., 'show', 'do', 'get', 'use') and replace them with strong active verbs (e.g., 'demonstrate', 'execute', 'synthesize', 'utilize'). Avoid wordy passive phrasing and conversational padding.\n"
+        "4. SEAMLESS NARRATIVE ALIGNMENT: Ensure the rewritten paragraph transitions cohesively from the preceding context (Context Before) and flows logically into the succeeding context (Context After). Align tenses, pronouns (first-person plural vs. third-person), and sentence complexity with the surrounding text.\n"
+        "5. STRUCTURAL INTEGRITY: Maintain the original logical layout and sequence of arguments. Only return the final, polished paragraph text. No commentary, markdown code blocks, intro/outro text, or warnings."
     )
     
     prompt = f"System Rules:\n{system_instruction}\n\n"
