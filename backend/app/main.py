@@ -1,7 +1,7 @@
 import os
 import uuid
 import shutil
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Query
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Query, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
@@ -350,15 +350,64 @@ def get_journal_tiers():
     return JOURNAL_TIERS
 
 @app.post("/api/v1/generator/generate")
-def generate_paper(request: PaperGenerateRequest):
-    if not request.topic.strip():
+async def generate_paper(
+    topic: str = Form(...),
+    journal_tier: str = Form("q1_ieee"),
+    journal_format: str = Form("ieee"),
+    author_name: str = Form("Manjunath"),
+    author_affiliation: str = Form("Department of Artificial Intelligence and Data Science, JKK Munirajah College of Technology (JKKMCT), Tamil Nadu, India"),
+    notes_file: Optional[UploadFile] = File(None)
+):
+    if not topic.strip():
         raise HTTPException(status_code=400, detail="Topic string cannot be empty.")
+    
+    context_notes = None
+    if notes_file:
+        ext = os.path.splitext(notes_file.filename)[1].lower()
+        temp_id = str(uuid.uuid4())
+        temp_path = os.path.join(settings.UPLOAD_DIR, f"notes_{temp_id}{ext}")
+        
+        with open(temp_path, "wb") as buffer:
+            shutil.copyfileobj(notes_file.file, buffer)
+            
+        try:
+            if ext == ".txt":
+                with open(temp_path, "r", encoding="utf-8", errors="ignore") as f:
+                    context_notes = f.read()
+            elif ext == ".pdf":
+                from backend.app.parser.pdf_parser import parse_pdf
+                parsed = parse_pdf(temp_path)
+                context_notes = "\n".join([block.get("original_text", "") for block in parsed])
+            elif ext == ".docx":
+                from backend.app.parser.docx_parser import parse_docx
+                parsed = parse_docx(temp_path)
+                context_notes = "\n".join([block.get("original_text", "") for block in parsed])
+            elif ext in [".pptx", ".ppt"]:
+                try:
+                    from pptx import Presentation
+                    prs = Presentation(temp_path)
+                    text_runs = []
+                    for slide in prs.slides:
+                        for shape in slide.shapes:
+                            if hasattr(shape, "text"):
+                                text_runs.append(shape.text)
+                    context_notes = "\n".join(text_runs)
+                except Exception as e:
+                    print(f"Error parsing PPTX: {e}")
+                    context_notes = f"[Parsed slides summary for {topic}]"
+        except Exception as e:
+            print(f"Error reading supplementary file: {e}")
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
     return generate_full_paper(
-        topic=request.topic,
-        journal_tier=request.journal_tier or "q1_ieee",
-        journal_format=request.journal_format or "ieee",
-        author_name=request.author_name or "Manjunath",
-        author_affiliation=request.author_affiliation or "Department of Artificial Intelligence and Data Science, JKK Munirajah College of Technology (JKKMCT), Tamil Nadu, India"
+        topic=topic,
+        journal_tier=journal_tier or "q1_ieee",
+        journal_format=journal_format or "ieee",
+        author_name=author_name or "Manjunath",
+        author_affiliation=author_affiliation or "Department of Artificial Intelligence and Data Science, JKK Munirajah College of Technology (JKKMCT), Tamil Nadu, India",
+        context_notes=context_notes
     )
 
 @app.get("/api/v1/advisor/{paper_id}")

@@ -18,11 +18,12 @@ def generate_full_paper(
     journal_tier: str = "q1_ieee", 
     journal_format: str = "ieee",
     author_name: str = "Manjunath",
-    author_affiliation: str = "Department of Artificial Intelligence and Data Science, JKK Munirajah College of Technology (JKKMCT), Tamil Nadu, India"
+    author_affiliation: str = "Department of Artificial Intelligence and Data Science, JKK Munirajah College of Technology (JKKMCT), Tamil Nadu, India",
+    context_notes: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Generates a multi-section academic research paper (approx. 10-15 pages / 6000+ words)
-    section-by-section using the LLM for deep academic logic, or fallback templates.
+    section-by-section using the LLM for academic logic, incorporating notes/slides context.
     """
     paper_id = str(uuid.uuid4())
     tier_info = JOURNAL_TIERS.get(journal_tier, JOURNAL_TIERS["q1_ieee"])
@@ -30,7 +31,7 @@ def generate_full_paper(
     db.create_paper(paper_id, f"Generated_Paper_{topic[:20].replace(' ', '_')}.docx", "docx")
 
     # Phase 1: Generate Paper Outline & References
-    metadata = _generate_metadata_outline(topic, tier_info)
+    metadata = _generate_metadata_outline(topic, tier_info, context_notes)
     title = metadata.get("title", f"A Novel Approach to {topic.title()}")
     abstract = metadata.get("abstract", "")
     keywords = metadata.get("keywords", "")
@@ -83,7 +84,8 @@ def generate_full_paper(
             section_name=sec["name"],
             section_desc=sec["desc"],
             tier_info=tier_info,
-            references=references_list
+            references=references_list,
+            context_notes=context_notes
         )
         
         generated_sections.append({
@@ -121,7 +123,7 @@ def generate_full_paper(
         "references": references_list
     }
 
-def _generate_metadata_outline(topic: str, tier_info: Dict[str, Any]) -> Dict[str, Any]:
+def _generate_metadata_outline(topic: str, tier_info: Dict[str, Any], context_notes: Optional[str] = None) -> Dict[str, Any]:
     """
     Generates paper title, abstract, keywords, and reference list.
     """
@@ -129,6 +131,11 @@ def _generate_metadata_outline(topic: str, tier_info: Dict[str, Any]) -> Dict[st
         prompt = (
             f"You are a distinguished research professor outlining a Q1 paper on the topic: '{topic}'.\n"
             f"Target style: {tier_info['name']}.\n\n"
+        )
+        if context_notes:
+            prompt += f"CRITICAL CONTEXT / NOTES FROM THE USER:\n{context_notes}\n\nYou MUST use, integrate, reference, and build upon the findings, data points, and outline present in these notes.\n\n"
+            
+        prompt += (
             "Return a JSON object containing:\n"
             "- 'title': A formal, academic title.\n"
             "- 'abstract': A highly detailed 200-word abstract.\n"
@@ -170,7 +177,8 @@ def _generate_section_content(
     section_name: str,
     section_desc: str,
     tier_info: Dict[str, Any],
-    references: List[str]
+    references: List[str],
+    context_notes: Optional[str] = None
 ) -> str:
     """
     Generates a highly detailed, 1000-word body text for a single section.
@@ -183,6 +191,11 @@ def _generate_section_content(
             f"Target Section: '{section_name}' ({section_desc})\n"
             f"Citation Style: {tier_info['citation_style']}\n"
             f"Bibliography: {references}\n\n"
+        )
+        if context_notes:
+            prompt += f"CRITICAL CONTEXT / NOTES FROM THE USER:\n{context_notes}\n\nYou MUST use, integrate, reference, and build upon the findings, data points, and outline present in these notes.\n\n"
+            
+        prompt += (
             "Instructions:\n"
             "1. Write an exceptionally comprehensive, professional, and rigorous academic section text (at least 800 to 1200 words).\n"
             "2. Divide the content into logical, flowing paragraphs. Do not add subheadings or markdown formatting inside the section text.\n"

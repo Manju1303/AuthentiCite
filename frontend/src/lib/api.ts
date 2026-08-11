@@ -180,6 +180,18 @@ export async function generatePaper(topic: string, journalTier: string = 'q1_iee
   return response.json();
 }
 
+export async function generatePaperWithForm(formData: FormData): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/generator/generate`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.detail || 'Failed to generate research paper');
+  }
+  return response.json();
+}
+
 export async function getJournalTiers(): Promise<Record<string, { name: string; style: string; citation_style: string }>> {
   const response = await fetch(`${API_BASE_URL}/api/v1/generator/tiers`);
   if (!response.ok) throw new Error('Failed to fetch journal tiers');

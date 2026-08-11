@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { generatePaper, rebuildPaper, getDownloadUrl } from '@/lib/api';
+import { generatePaperWithForm, rebuildPaper, getDownloadUrl } from '@/lib/api';
 import AcademicPaperViewer from '@/components/AcademicPaperViewer';
 
 
@@ -10,6 +10,7 @@ export default function GeneratePaperPage() {
   const router = useRouter();
   const [topic, setTopic] = useState('');
   const [journalTier, setJournalTier] = useState('q1_ieee');
+  const [notesFile, setNotesFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultPaper, setResultPaper] = useState<any>(null);
   const [error, setError] = useState('');
@@ -24,8 +25,18 @@ export default function GeneratePaperPage() {
     setResultPaper(null);
     setDownloadUrl('');
 
+    const formData = new FormData();
+    formData.append('topic', topic);
+    formData.append('journal_tier', journalTier);
+    formData.append('journal_format', 'ieee');
+    formData.append('author_name', 'Manjunath');
+    formData.append('author_affiliation', 'Department of Artificial Intelligence and Data Science, JKK Munirajah College of Technology (JKKMCT), Tamil Nadu, India');
+    if (notesFile) {
+      formData.append('notes_file', notesFile);
+    }
+
     try {
-      const res = await generatePaper(topic, journalTier, 'ieee');
+      const res = await generatePaperWithForm(formData);
       setResultPaper(res);
 
       // Rebuild paper to DOCX
@@ -97,6 +108,46 @@ export default function GeneratePaperPage() {
               className="w-full px-4 py-3.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-sans"
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-200 uppercase tracking-wider block">
+              Supplementary Context / Prepared Notes (Optional)
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept=".txt,.pdf,.docx,.pptx,.ppt"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setNotesFile(e.target.files[0]);
+                  }
+                }}
+                className="hidden"
+                id="notes-upload"
+              />
+              <label
+                htmlFor="notes-upload"
+                className="px-4 py-2.5 bg-slate-950/80 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-300 font-bold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-2 font-mono"
+              >
+                Attach Notes, PPT, or PDF
+              </label>
+              {notesFile && (
+                <div className="flex items-center gap-2 bg-slate-950/40 px-3 py-1.5 border border-slate-800 rounded-xl">
+                  <span className="text-[10px] text-slate-400 font-mono truncate max-w-[200px]">{notesFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setNotesFile(null)}
+                    className="text-rose-400 hover:text-rose-300 text-xs font-bold"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+              Upload prepared notes or presentation files to feed context, structure, and details directly into the paper.
+            </p>
           </div>
 
           <div className="space-y-2">
