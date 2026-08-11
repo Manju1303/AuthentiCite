@@ -143,19 +143,38 @@ def parse_docx(file_path: str, media_dir: str = "uploads/media") -> Dict[str, An
                     })
                     continue
                 
+                font_name = "Calibri"
+                font_size = 11.0
+                color_hex = None
+                
+                if r.font:
+                    try:
+                        font_name = r.font.name or "Calibri"
+                    except Exception:
+                        pass
+                    try:
+                        font_size = r.font.size.pt if (r.font.size and r.font.size.pt) else 11.0
+                    except Exception:
+                        pass
+                    try:
+                        if r.font.color and r.font.color.rgb:
+                            color_hex = f"#{r.font.color.rgb[0]:02x}{r.font.color.rgb[1]:02x}{r.font.color.rgb[2]:02x}"
+                    except Exception:
+                        pass
+                
                 runs_data.append({
                     "text": r.text,
-                    "font_name": r.font.name or "Calibri",
-                    "font_size": r.font.size.pt if r.font.size else 11.0,
+                    "font_name": font_name,
+                    "font_size": font_size,
                     "bold": r.bold or False,
                     "italic": r.italic or False,
-                    "color": f"#{r.font.color.rgb[0]:02x}{r.font.color.rgb[1]:02x}{r.font.color.rgb[2]:02x}" if (r.font.color and r.font.color.rgb) else None
+                    "color": color_hex
                 })
             
             layout_meta = {
                 "type": "paragraph",
                 "alignment": align_val,
-                "style": para.style.name,
+                "style": para.style.name if para.style else "Normal",
                 "runs": runs_data,
                 "spacing_before": para.paragraph_format.space_before.pt if para.paragraph_format.space_before else 0,
                 "spacing_after": para.paragraph_format.space_after.pt if para.paragraph_format.space_after else 6,
