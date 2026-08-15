@@ -1,6 +1,0 @@
-- [x] Add new configuration settings to `backend/app/config.py`
-- [x] Implement `copyleaks_service.py` and hook it into `analyzer.py`
-- [x] Implement `marker_parser.py` and hook it into the main parser
-- [x] Implement `crew_rewriter.py` and hook it into `rewrite_engine.py`
-- [x] Create `deployment_guide.md` with free deployment instructions and LibreOffice configurations
-- [x] Verify execution runs smoothly and update task statuses
