@@ -1,7 +1,11 @@
+try:
+    import httpx
+except ImportError:
+    httpx = None
 import uuid
 import json
-import httpx
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
+
 from backend.app.config import settings
 from backend.app import database as db
 

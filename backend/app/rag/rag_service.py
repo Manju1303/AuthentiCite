@@ -1,6 +1,10 @@
 import json
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
 from typing import List, Dict, Any, Generator, Optional
+
 from backend.app.config import settings
 from backend.app.rag.hybrid_search import hybrid_search_engine
 

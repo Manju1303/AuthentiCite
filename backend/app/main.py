@@ -49,6 +49,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
+
 @app.post("/api/v1/papers/upload", response_model=PaperResponse)
 async def upload_paper(
     background_tasks: BackgroundTasks,
@@ -63,8 +65,16 @@ async def upload_paper(
     temp_filename = f"{paper_id}{ext}"
     temp_path = os.path.join(settings.UPLOAD_DIR, temp_filename)
     
+    file_size = 0
     with open(temp_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        while chunk := await file.read(1024 * 1024):
+            file_size += len(chunk)
+            if file_size > MAX_UPLOAD_SIZE:
+                buffer.close()
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+                raise HTTPException(status_code=413, detail="File size exceeds maximum limit of 50MB.")
+            buffer.write(chunk)
         
     try:
         # Create paper record in DB with queued status
@@ -81,7 +91,6 @@ async def upload_paper(
         
         return db.get_paper(paper_id)
     except Exception as e:
-        # Clean up on failure
         if os.path.exists(temp_path):
             try:
                 os.remove(temp_path)
@@ -119,7 +128,6 @@ def run_similarity_analysis(paper_id: str):
     if not sections:
         raise HTTPException(status_code=400, detail="Paper contains no text blocks to analyze.")
         
-    # Analyze similarity against other papers
     result = analyze_paper_similarity(paper_id, sections)
     return {
         "overall_similarity": result["overall_similarity"],
@@ -127,32 +135,27 @@ def run_similarity_analysis(paper_id: str):
     }
 
 @app.post("/api/v1/sections/{section_id}/rewrite", response_model=SectionResponse)
-def rewrite_section(section_id: str, request: SectionRewriteRequest):
+async def rewrite_section(section_id: str, request: SectionRewriteRequest):
     section = db.get_section(section_id)
     if not section:
         raise HTTPException(status_code=404, detail="Section not found.")
         
-    # Get paragraph with context for LLM rewriter
     sections = db.get_paper_sections(section["paper_id"])
     target_idx = next(i for i, s in enumerate(sections) if s["id"] == section_id)
     context_info = get_paragraph_with_context(sections, target_idx)
     
-    # Run LLM rewrite
-    rewritten_text = rewrite_text(
+    rewritten_text = await rewrite_text(
         text=context_info["text"],
         context_before=context_info["context_before"],
         context_after=context_info["context_after"],
         target_similarity=settings.SIMILARITY_THRESHOLD
     )
     
-    # Run quality validation
     quality_report = check_academic_quality(context_info["text"], rewritten_text)
     
-    # Update layout metadata with warnings if any
     meta = section["layout_metadata"]
     meta["quality_warnings"] = quality_report["warnings"]
     
-    # Save rewrite to DB (reset similarity score for re-checking)
     db.update_section_rewrite(section_id, rewritten_text, similarity_score=0.0, is_flagged=False)
     
     return db.get_section(section_id)
@@ -169,21 +172,19 @@ def rewrite_flagged_sections(paper_id: str, background_tasks: BackgroundTasks):
     if not flagged_sections:
         return {"message": "No flagged sections found to rewrite."}
         
-    def process_bulk_rewrites():
+    async def process_bulk_rewrites():
         db.update_paper_status(paper_id, "rewriting")
         for idx, sec in enumerate(flagged_sections):
             try:
                 target_idx = next(i for i, s in enumerate(sections) if s["id"] == sec["id"])
                 context_info = get_paragraph_with_context(sections, target_idx)
                 
-                # Rewrite text
-                rewritten_text = rewrite_text(
+                rewritten_text = await rewrite_text(
                     text=context_info["text"],
                     context_before=context_info["context_before"],
                     context_after=context_info["context_after"]
                 )
                 
-                # Check quality
                 quality_report = check_academic_quality(context_info["text"], rewritten_text)
                 meta = sec["layout_metadata"]
                 meta["quality_warnings"] = quality_report["warnings"]
@@ -192,12 +193,16 @@ def rewrite_flagged_sections(paper_id: str, background_tasks: BackgroundTasks):
             except Exception as e:
                 print(f"Error bulk rewriting section {sec['id']}: {e}")
                 
-        # Run similarity recheck after all rewrites are complete
         updated_sections = db.get_paper_sections(paper_id)
         analyze_paper_similarity(paper_id, updated_sections)
         db.update_paper_status(paper_id, "ready")
 
-    background_tasks.add_task(process_bulk_rewrites)
+    def run_async_bulk():
+        import asyncio
+        asyncio.run(process_bulk_rewrites())
+
+    background_tasks.add_task(run_async_bulk)
+
     return {"message": f"Started background rewrite of {len(flagged_sections)} flagged sections."}
 
 @app.post("/api/v1/papers/{paper_id}/rebuild")

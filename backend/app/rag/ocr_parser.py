@@ -1,8 +1,12 @@
 import os
 import re
 from typing import Dict, Any, List
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
 from backend.app.config import settings
+
 
 try:
     import fitz  # PyMuPDF

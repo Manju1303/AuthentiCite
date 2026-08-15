@@ -76,12 +76,13 @@ async def run_autonomous_pipeline(
                     context_info = get_paragraph_with_context(updated_sections, target_idx)
                     
                     # Rewrite text block
-                    rewritten_text = rewrite_text(
+                    rewritten_text = await rewrite_text(
                         text=context_info["text"],
                         context_before=context_info["context_before"],
                         context_after=context_info["context_after"],
                         target_similarity=settings.SIMILARITY_THRESHOLD
                     )
+
                     
                     # Validate quality metrics
                     quality_report = check_academic_quality(context_info["text"], rewritten_text)

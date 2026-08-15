@@ -191,8 +191,12 @@ def analyze_paper_similarity(paper_id: str, uploaded_sections: List[Dict[str, An
                     best_match = db_rec
                     best_agent_analysis = agent_res
                     
+            words_count = len(text.split())
+            is_header = words_count < 10 or bool(re.search(r'^(?:[I|V|X]+\.|\d+\.|\bABSTRACT\b|\bREFERENCES\b|\bACKNOWLEDGMENT\b)', text.strip(), re.IGNORECASE))
+
             s_copy["similarity_score"] = round(max_sim, 3)
-            s_copy["is_flagged"] = max_sim >= settings.SIMILARITY_THRESHOLD
+            s_copy["is_flagged"] = (max_sim >= settings.SIMILARITY_THRESHOLD) and not is_header
+
             
             if best_match and best_agent_analysis:
                 s_copy["layout_metadata"]["agent_analysis"] = best_agent_analysis

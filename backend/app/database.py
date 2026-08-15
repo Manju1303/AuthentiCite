@@ -1,15 +1,42 @@
 import sqlite3
 import json
 import os
-from backend.app.config import settings
+import time
+import functools
 
-DB_PATH = settings.DATABASE_URL.replace("sqlite:///", "")
+try:
+    from backend.app.config import settings
+    DB_PATH = settings.DATABASE_URL.replace("sqlite:///", "")
+except Exception:
+    DB_PATH = "./research_ai.db"
+
+
+def with_db_retry(max_retries: int = 5, delay: float = 0.2):
+    """Decorator to retry SQLite database operations if database is locked."""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            last_err = None
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except sqlite3.OperationalError as e:
+                    last_err = e
+                    if "locked" in str(e).lower() or "busy" in str(e).lower():
+                        time.sleep(delay * (attempt + 1))
+                    else:
+                        raise e
+            raise last_err
+        return wrapper
+    return decorator
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=30.0)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=60.0)
     conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=60000;")
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def init_db():
     conn = get_db_connection()
