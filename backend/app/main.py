@@ -410,11 +410,34 @@ async def generate_paper(
         context_notes=context_notes
     )
 
+from backend.app.advisor.research_agent import research_agent
+
 @app.get("/api/v1/advisor/{paper_id}")
 def get_plagiarism_advisor(paper_id: str):
     paper = db.get_paper(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found.")
     return generate_reduction_advice(paper_id)
+
+# --- Autonomous Research Agent Endpoints ---
+@app.get("/api/v1/research/search")
+async def research_search(query: str = Query(...), limit: int = Query(6)):
+    if not query.strip():
+        raise HTTPException(status_code=400, detail="Query parameter cannot be empty.")
+    results = await research_agent.search_literature(query=query, limit=limit)
+    return {"query": query, "count": len(results), "papers": results}
+
+@app.post("/api/v1/research/synthesize")
+async def research_synthesize(topic: str = Form(...), style: str = Form("numeric")):
+    if not topic.strip():
+        raise HTTPException(status_code=400, detail="Topic cannot be empty.")
+    return await research_agent.synthesize_literature_review(topic=topic, style=style)
+
+@app.post("/api/v1/research/grounding")
+async def research_grounding(passage: str = Form(...)):
+    if not passage.strip():
+        raise HTTPException(status_code=400, detail="Passage text cannot be empty.")
+    return await research_agent.verify_claim_grounding(passage=passage)
+
 
 

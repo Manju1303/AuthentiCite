@@ -1,13 +1,17 @@
-import os
-from pydantic_settings import BaseSettings
-from pydantic import Field, ConfigDict
+try:
+    from pydantic_settings import BaseSettings
+    from pydantic import Field, ConfigDict
+except ImportError:
+    from pydantic import BaseModel as BaseSettings, Field
+    ConfigDict = dict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "AuthentiCite - Academic Paper Rewriter & Similarity Analyzer"
     API_V1_STR: str = "/api/v1"
     
     # Database
-    DATABASE_URL: str = Field(default="sqlite:///./research_ai.db", validation_alias="DATABASE_URL")
+    DATABASE_URL: str = Field(default="sqlite:///./research_ai.db")
+
     
     # File Storage
     UPLOAD_DIR: str = Field(default="uploads", validation_alias="UPLOAD_DIR")
