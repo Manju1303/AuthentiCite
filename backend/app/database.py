@@ -52,6 +52,16 @@ def init_db():
         FOREIGN KEY (paper_id) REFERENCES papers (id) ON DELETE CASCADE
     )
     """)
+
+    # Create paragraph_embeddings table for neural dense vectors
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS paragraph_embeddings (
+        section_id TEXT PRIMARY KEY,
+        paper_id TEXT NOT NULL,
+        embedding_json TEXT NOT NULL,
+        FOREIGN KEY (paper_id) REFERENCES papers (id) ON DELETE CASCADE
+    )
+    """)
     
     conn.commit()
     conn.close()

@@ -16,13 +16,21 @@ def generate_reduction_advice(paper_id: str) -> Dict[str, Any]:
 
     for s in flagged_sections:
         score = s.get("similarity_score", 0.0)
-        match_src = s.get("layout_metadata", {}).get("similarity_source")
+        meta = s.get("layout_metadata", {})
+        match_src = meta.get("similarity_source", {})
+        agent_analysis = meta.get("agent_analysis", {})
         text = s.get("original_text", "")
 
         action = "Rewrite Paragraph"
         tactics = []
 
-        if score > 0.40:
+        risk_cat = agent_analysis.get("risk_category", "Direct Plagiarism")
+        
+        if "Paraphrased" in risk_cat:
+            action = "Deep Paraphrase Structural Re-ordering"
+            tactics.append("Invert sentence structure and expand technical methodology context.")
+            tactics.append("Replace domain synonyms while maintaining original technical intent.")
+        elif score > 0.40:
             action = "Major Structural Reorganization"
             tactics.append("Convert passive sentences to active voice and split compound clauses.")
             tactics.append("Insert domain-specific citations [e.g. [1]] to ground verbatim matches.")
@@ -39,6 +47,11 @@ def generate_reduction_advice(paper_id: str) -> Dict[str, Any]:
             "section_name": s.get("section_name", "Paragraph Block"),
             "similarity_score": round(score * 100, 1),
             "match_source_file": match_src.get("filename") if match_src else "Internal Corpus Match",
+            "risk_category": risk_cat,
+            "risk_level": agent_analysis.get("risk_level", "HIGH"),
+            "semantic_score": round(agent_analysis.get("semantic_score", 0.0) * 100, 1),
+            "lexical_score": round(agent_analysis.get("lexical_score", 0.0) * 100, 1),
+            "matched_spans": agent_analysis.get("matched_spans", match_src.get("matched_spans", [])),
             "recommended_action": action,
             "tactics": tactics,
             "snippet": text[:120] + "..." if len(text) > 120 else text
@@ -48,8 +61,8 @@ def generate_reduction_advice(paper_id: str) -> Dict[str, Any]:
 
     strategy_summary = (
         f"Your paper has an overall similarity index of {overall_similarity}%. "
-        f"We identified {len(flagged_sections)} high-risk paragraph blocks exceeding the threshold. "
-        f"Applying automatic AI rewriting with citation shielding can lower the score below 15%."
+        f"We identified {len(flagged_sections)} high-risk paragraph blocks exceeding threshold. "
+        f"Multi-stage agent detection evaluated lexical fingerprints & SBERT neural embeddings to pinpoint risk areas."
     )
 
     return {
@@ -60,3 +73,4 @@ def generate_reduction_advice(paper_id: str) -> Dict[str, Any]:
         "strategy_summary": strategy_summary,
         "recommendations": recommendations
     }
+
