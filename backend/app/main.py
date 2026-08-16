@@ -444,5 +444,37 @@ async def research_grounding(passage: str = Form(...)):
         raise HTTPException(status_code=400, detail="Passage text cannot be empty.")
     return await research_agent.verify_claim_grounding(passage=passage)
 
+# --- AI Content & Perplexity/Burstiness Detector Endpoints ---
+from backend.app.advisor.ai_detector_agent import ai_detector
+from backend.app.advisor.peer_reviewer import peer_reviewer
+from backend.app.quality.scholarly_metrics import scholarly_metrics
+
+@app.post("/api/v1/detect-ai")
+def detect_ai_content(text: str = Form(...)):
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Input text cannot be empty.")
+    return ai_detector.analyze_text(text)
+
+@app.post("/api/v1/papers/{paper_id}/peer-review")
+def run_peer_review(paper_id: str):
+    paper = db.get_paper(paper_id)
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found.")
+    return peer_reviewer.evaluate_paper(paper_id)
+
+@app.get("/api/v1/papers/{paper_id}/metrics")
+def get_paper_scholarly_metrics(paper_id: str):
+    paper = db.get_paper(paper_id)
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found.")
+    sections = db.get_paper_sections(paper_id)
+    full_text = "\n".join([s.get("original_text", "") for s in sections])
+    return {
+        "paper_id": paper_id,
+        "filename": paper.get("filename"),
+        "metrics": scholarly_metrics.analyze_readability_and_tone(full_text)
+    }
+
+
 
 
