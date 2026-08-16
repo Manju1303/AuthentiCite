@@ -5,6 +5,9 @@ from typing import List, Dict, Any, Set, Optional
 
 logger = logging.getLogger(__name__)
 
+from backend.app.rag.faiss_vector_index import faiss_vector_store
+
+
 # Lazy model loader for SentenceTransformer to optimize startup time
 _SBERT_MODEL = None
 _SBERT_INITIALIZED = False

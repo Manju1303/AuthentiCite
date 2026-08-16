@@ -504,6 +504,30 @@ async def parse_manuscript_ocr(file: UploadFile = File(...)):
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
+# --- WebSocket Real-Time Progress Stream Endpoints ---
+from fastapi import WebSocket, WebSocketDisconnect
+from backend.app.websocket_progress import progress_ws_manager
+
+@app.websocket("/ws/papers/{paper_id}/progress")
+async def websocket_paper_progress(websocket: WebSocket, paper_id: str):
+    await progress_ws_manager.connect(paper_id, websocket)
+    try:
+        await websocket.send_json({
+            "paper_id": paper_id,
+            "step": "connected",
+            "progress_pct": 0,
+            "message": f"Real-time WebSocket progress stream active for paper {paper_id}"
+        })
+        while True:
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_json({"type": "pong"})
+    except WebSocketDisconnect:
+        progress_ws_manager.disconnect(paper_id, websocket)
+    except Exception as e:
+        progress_ws_manager.disconnect(paper_id, websocket)
+
+
 
 
 
