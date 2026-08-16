@@ -1,8 +1,13 @@
 import os
 import uuid
-from PIL import Image
 import io
 from typing import Dict, Any
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
+
 
 try:
     import fitz  # PyMuPDF

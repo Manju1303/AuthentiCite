@@ -1,9 +1,13 @@
 import os
 import uuid
-from docx import Document
-from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+try:
+    from docx import Document
+    from docx.shared import Inches, Pt, RGBColor
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+except ImportError:
+    Document = None
 from typing import List, Dict, Any
+
 
 def parse_docx(file_path: str, media_dir: str = "uploads/media") -> Dict[str, Any]:
     doc = Document(file_path)

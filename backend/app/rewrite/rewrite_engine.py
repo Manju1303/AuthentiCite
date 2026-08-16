@@ -8,6 +8,8 @@ from typing import Dict, Any, Optional
 from backend.app.config import settings
 
 from backend.app.similarity.sanitizer import sanitize_text, desanitize_text
+from backend.app.rewrite.academic_rewrite_enhancer import academic_rewrite_enhancer
+
 
 async def rewrite_text(
     text: str, 
@@ -16,21 +18,31 @@ async def rewrite_text(
     target_similarity: float = 0.15
 ) -> str:
     """
-    Wrapper that sanitizes PII before sending to LLMs, and restores them in final output.
+    Wrapper that sanitizes PII and shields LaTeX math formulas & citation brackets
+    before sending to LLMs, and restores them cleanly in final output.
     """
+    # 1. PII Sanitization
     sanitized_text, mask_map = sanitize_text(text)
     sanitized_before, before_map = sanitize_text(context_before)
     mask_map.update(before_map)
     sanitized_after, after_map = sanitize_text(context_after)
     mask_map.update(after_map)
-    
+
+    # 2. LaTeX Math & Citation Shielding
+    shielded_text, shield_map = academic_rewrite_enhancer.shield_latex_and_citations(sanitized_text)
+
+    # 3. LLM Rewrite Execution
     result = await _rewrite_text_internal(
-        text=sanitized_text,
+        text=shielded_text,
         context_before=sanitized_before,
         context_after=sanitized_after,
         target_similarity=target_similarity
     )
-    return desanitize_text(result, mask_map)
+
+    # 4. Unshield Math & Citations, and Desanitize PII
+    unshielded = academic_rewrite_enhancer.unshield_latex_and_citations(result, shield_map)
+    return desanitize_text(unshielded, mask_map)
+
 
 async def _rewrite_text_internal(
     text: str, 

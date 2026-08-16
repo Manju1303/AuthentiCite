@@ -1,9 +1,12 @@
-import os
-from pypdf import PdfReader
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
 from typing import Dict, Any
 from backend.app.parser.docx_parser import parse_docx
 from backend.app.parser.pdf_parser import parse_pdf
 from backend.app.parser.ocr_engine import ocr_pdf
+
 
 def parse_document(file_path: str, media_dir: str = "uploads/media") -> Dict[str, Any]:
     """

@@ -475,6 +475,36 @@ def get_paper_scholarly_metrics(paper_id: str):
         "metrics": scholarly_metrics.analyze_readability_and_tone(full_text)
     }
 
+# --- Hybrid OCR & Document Structure Extraction Endpoints ---
+from backend.app.parser.hybrid_ocr_reader import hybrid_ocr_reader
+from backend.app.parser.structure_recovery_agent import structure_recovery_agent
+
+@app.post("/api/v1/parser/ocr")
+async def parse_manuscript_ocr(file: UploadFile = File(...)):
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext != ".pdf":
+        raise HTTPException(status_code=400, detail="OCR manuscript parser requires PDF files.")
+
+    temp_id = str(uuid.uuid4())
+    temp_path = os.path.join(settings.UPLOAD_DIR, f"ocr_{temp_id}.pdf")
+    with open(temp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    try:
+        doc_reading = hybrid_ocr_reader.read_document(temp_path)
+        recovered = structure_recovery_agent.recover_document_structure(doc_reading["pages"])
+        return {
+            "filename": file.filename,
+            "pages_count": doc_reading["pages_count"],
+            "is_scanned": doc_reading["is_scanned_manuscript"],
+            "sections": recovered["sections"],
+            "references": recovered["references"]
+        }
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+
 
 
 
