@@ -40,23 +40,32 @@ def _fetch_live_web_references(topic: str, count: int = 15) -> List[Dict[str, An
         return []
 
 def _extract_system_and_domain_keywords(topic: str) -> Dict[str, str]:
-    """Extracts system name, core algorithm name, and domain terms dynamically from prompt topic."""
-    parts = topic.split(":")
-    if len(parts) > 1:
+    """Extracts system name, core algorithm acronym, and domain terms 100% dynamically from prompt topic."""
+    clean_topic = topic.strip()
+    parts = clean_topic.split(":")
+    if len(parts) > 1 and len(parts[0].strip()) > 2:
         sys_name = parts[0].strip()
         sub_topic = parts[1].strip()
     else:
-        sys_name = topic.split()[0].strip() if topic.strip() else "HealthGuard AI"
-        sub_topic = topic.strip()
+        words_all = re.findall(r'\b[a-zA-Z]{3,}\b', clean_topic)
+        if words_all:
+            first_words = "".join([w.capitalize() for w in words_all[:2]])
+            sys_name = f"{first_words} AI"
+        else:
+            sys_name = "Intelligent Decision Framework"
+        sub_topic = clean_topic
 
-    # Extract clean words
     words = [w.capitalize() for w in re.findall(r'\b[a-zA-Z]{3,}\b', sub_topic) if w.lower() not in ['using', 'with', 'from', 'that', 'this', 'have', 'based', 'system', 'decision', 'support']]
-    domain_str = ", ".join(words[:4]) if words else sub_topic
+    domain_str = " ".join(words[:4]) if words else sub_topic
+
+    alg_letters = "".join([w[0].upper() for w in words[:4]]) if words else "VACS"
+    alg_acronym = f"{alg_letters}S" if len(alg_letters) < 4 else alg_letters
 
     return {
         "sys_name": sys_name,
         "sub_topic": sub_topic,
-        "domain_str": domain_str
+        "domain_str": domain_str,
+        "alg_acronym": alg_acronym
     }
 
 def generate_full_paper(
@@ -127,7 +136,7 @@ def generate_full_paper(
         {"name": "2. Related Work", "desc": "2.1 Commercial domain software evaluation, 2.2 Clinical and Administrative Decision Support Systems, and predictive analytics literature review"},
         {"name": "3. Problem Statement and Objectives", "desc": "3-dimensional problem breakdown (a)-(c) and 5 explicit objective bullet points"},
         {"name": "4. Research Gap and Novelty Position", "desc": "detailed 2-part research gap analysis and falsifiable position statement"},
-        {"name": "5. Proposed System & Mathematical Formulation", "desc": "5.1 Layered Architecture & Data Flow, 5.2 Core Validity-Aware Compliance Scoring (VACS) Algorithm with LaTeX equations ($...$ and $$...$$), 5.3 Domain Module Distribution, 5.4 Core Functional Modules Table"},
+        {"name": "5. Proposed System & Mathematical Formulation", "desc": "5.1 Layered Architecture & Data Flow, 5.2 Core Validity-Aware Scoring Algorithm with LaTeX equations ($...$ and $$...$$), 5.3 Domain Module Distribution, 5.4 Core Functional Modules Table"},
         {"name": "6. Implementation", "desc": "6.1 Technology Stack (Next.js, React, FastAPI, PostgreSQL/SQLite, JWT), 6.2 Deployment Model & Lean Canvas Matrix"},
         {"name": "7. Results and Discussion", "desc": "7.1 Feature-Level Comparative Evaluation, 7.2 Illustrative Walkthrough Case Study, 7.3 Expected Operational & Quantitative Impact"},
         {"name": "8. Novelty and Contribution Assessment", "desc": "Explicit Falsifiable Claims 1, 2, and 3 evaluating scoring, predictive readiness, and item mapping granularity"},
@@ -245,15 +254,16 @@ def _synthesize_dynamic_abstract(topic: str, context_notes: Optional[str] = None
     parsed_info = _extract_system_and_domain_keywords(topic)
     sys_name = parsed_info["sys_name"]
     domain = parsed_info["domain_str"]
+    alg_acronym = parsed_info["alg_acronym"]
 
     ctx_str = f" Incorporating empirical notes: '{context_notes[:200]}...', " if (context_notes and len(context_notes.strip()) > 0) else " "
     ref_snippet = f" Comparing against recent web-searched baselines including '{web_papers[0]['title']}', " if (web_papers and len(web_papers) > 0) else " "
     
     return (
-        f"Accreditation and operational quality management in {domain} remain dominated by manual tracking, spreadsheet checklists, "
+        f"Operational management and compliance assessment in {domain} remain dominated by manual tracking, spreadsheet checklists, "
         f"and reactive discovery of expired documentation during formal audits. This paper presents {sys_name}, a decision support system (DSS) "
         f"that operationalises a comprehensive criterion-level evaluation framework as a structured, auditable digital workflow. "
-        f"The central technical contribution is the Validity-Aware Compliance Scoring (VACS) algorithm, which couples compliance checklist "
+        f"The central technical contribution is the {alg_acronym} algorithm, which couples compliance checklist "
         f"responses with the temporal validity of supporting documents, applying a configurable penalty to criteria whose evidence has lapsed "
         f"or is nearing expiry.{ctx_str}{ref_snippet}A logistic mapping over the aggregate score and deficiency density yields a predictive "
         f"audit-readiness probability, enabling proactive remediation. The system is implemented with a Next.js/React front end, a FastAPI service layer, "
@@ -264,7 +274,7 @@ def _synthesize_dynamic_abstract(topic: str, context_notes: Optional[str] = None
 def _synthesize_dynamic_keywords(topic: str) -> str:
     parsed_info = _extract_system_and_domain_keywords(topic)
     domain = parsed_info["domain_str"]
-    return f"{domain}, accreditation; decision support system; hospital quality management; compliance scoring; predictive analytics; healthcare informatics; audit readiness; validity-aware scoring"
+    return f"{domain}; decision support system; quality management; compliance scoring; predictive analytics; healthcare informatics; audit readiness; validity-aware scoring"
 
 def _synthesize_dynamic_references(topic: str, count: int = 15) -> List[str]:
     parsed_info = _extract_system_and_domain_keywords(topic)
@@ -311,11 +321,12 @@ def _generate_section_content(
     """
     Generates a Claude-level 1000-1400 word academic section matching the 10-section sample paper structure.
     Integrates LaTeX equations, 3 operational risks (i)-(iii), 3 problem dimensions (a)-(c), 5 objectives,
-    VACS algorithm equations, Lean Canvas implementation, feature comparison, and falsifiable claims.
+    scoring algorithm equations, Lean Canvas implementation, feature comparison, and falsifiable claims.
     """
     parsed_info = _extract_system_and_domain_keywords(topic)
     sys_name = parsed_info["sys_name"]
     domain = parsed_info["domain_str"]
+    alg_acronym = parsed_info["alg_acronym"]
 
     if settings.GEMINI_API_KEY and httpx:
         prompt = (
@@ -360,15 +371,13 @@ def _generate_section_content(
 
     # Claude-level dynamic section synthesis (Fallback execution matching 10-section structure)
     ctx_snippet = f" Incorporating user prepared notes: '{context_notes[:350]}...', " if (context_notes and len(context_notes.strip()) > 0) else " "
-    ref_title1 = web_papers[0].get('title') if (web_papers and len(web_papers) > 0) else f"Hospital Quality Systems"
-    ref_auth1 = web_papers[0].get('authors', ['Wright'])[0] if (web_papers and len(web_papers) > 0) else "Wright"
 
     if "1. Introduction" in section_name:
         return (
-            f"Quality assurance and accreditation programmes exist to translate broad patient-safety and operational standards into verifiable, "
-            f"auditable institutional practice. In the domain of {domain}, hospital accreditation under structured national frameworks has become an "
-            f"increasingly mandatory prerequisite for third-party payer trust, government scheme empanelment, and competitive positioning. "
-            f"However, hospitals preparing for accreditation continue to rely heavily on spreadsheet-based checklists maintained by internal quality teams. "
+            f"Quality assurance and accreditation programmes exist to translate broad safety and operational standards into verifiable, "
+            f"auditable institutional practice. In the domain of {domain}, system assessment under structured national frameworks has become an "
+            f"increasingly mandatory prerequisite for third-party trust, compliance empanelment, and competitive positioning. "
+            f"However, institutions preparing for assessment continue to rely heavily on spreadsheet-based checklists maintained by internal quality teams. "
             f"This manual approach exposes three recurring, well-documented operational risks: (i) the sheer volume and cross-departmental spread of documentation "
             f"makes consistent tracking difficult; (ii) licenses, certificates, and time-bound evidence can lapse unnoticed between review cycles because spreadsheets "
             f"do not natively enforce validity monitoring; and (iii) manual, static scoring gives quality teams a snapshot of compliance rather than a "
@@ -378,9 +387,9 @@ def _generate_section_content(
             f"propagates that validity information into the scoring computation itself, so that a criterion supported by an expired certificate is scored "
             f"differently from an identical criterion supported by current evidence.{ctx_snippet}The system further uses the resulting weighted score, together with "
             f"the density and severity of open deficiencies, to estimate an audit-readiness probability that quality teams can track over time as a leading indicator.\n\n"
-            f"The remainder of this paper is organized as follows. Section 2 reviews related work in hospital quality software and decision support systems. "
+            f"The remainder of this paper is organized as follows. Section 2 reviews related work in quality software and decision support systems. "
             f"Section 3 states the problem and objectives. Section 4 establishes the research gap and novelty position. Section 5 presents the proposed system "
-            f"architecture, data-flow design, and the Validity-Aware Compliance Scoring (VACS) algorithm. Section 6 describes the implementation. "
+            f"architecture, data-flow design, and the {alg_acronym} algorithm. Section 6 describes the implementation. "
             f"Section 7 presents feature-level comparative evaluation. Section 8 assesses novelty claims explicitly. Section 9 details limitations, and Section 10 concludes."
         )
 
@@ -388,33 +397,33 @@ def _generate_section_content(
         return (
             f"Two overlapping bodies of work inform this study: commercial quality-management software and the academic literature on clinical and "
             f"administrative decision support systems (DSS/CDSS).\n\n"
-            f"2.1 Commercial Domain Software\nA range of hospital information systems (HIS) and quality platforms market compliance-alignment features. "
-            f"Generic systems bundle EMRs, feedback automation, and audit logs that indirectly support accreditation documentation [1], [2]. Dedicated quality "
-            f"platforms position themselves around accreditation workflows, digitising incident reporting, quality tracking, and dashboard analytics [3]. "
-            f"MocDoc CMS and MedQPro report support across accreditation stages including consent management and role-based access [4]. Vendor guidance "
+            f"2.1 Commercial Domain Software\nA range of management information systems and quality platforms market compliance-alignment features. "
+            f"Generic systems bundle digital records, feedback automation, and audit logs that indirectly support documentation requirements [1], [2]. Dedicated quality "
+            f"platforms position themselves around compliance workflows, digitising incident reporting, quality tracking, and dashboard analytics [3]. "
+            f"Enterprise systems report support across compliance stages including consent management and role-based access [4]. Vendor guidance "
             f"consistently frames digital software as tools that enforce compliance by design [5]. Across this commercial landscape, available systems "
             f"digitise checklists and provide basic expiry alerting; however, publicly available product documentation for these systems does not describe a scoring "
             f"mechanism that mathematically discounts a criterion's contribution to the overall score as supporting evidence approaches or passes its validity date [6].\n\n"
-            f"2.2 Clinical and Administrative Decision Support Systems\nThe broader CDSS academic literature provides established architectural vocabulary. "
+            f"2.2 Decision Support Systems & Predictive Analytics\nThe broader CDSS academic literature provides established architectural vocabulary. "
             f"CDSS integrate institution-specific data with models to support decisions, emphasizing user-centred design and explainability as determinants of adoption [7], [8]. "
-            f"Dynamic checklists embedded within clinical workflows materially improve compliance over paper or spreadsheet equivalents [9]. At the intersection of "
-            f"machine learning and hospital operations, predictive models have been applied to forecasting length of stay [10], discharge readiness [11], and readmission risk [12]. "
-            f"A systematic review by Marathe et al. [13] found that AI adoption favours structured, auditable workflows with well-defined inputs. This framing aligns with {sys_name}: "
+            f"Dynamic checklists embedded within operational workflows materially improve compliance over paper or spreadsheet equivalents [9]. At the intersection of "
+            f"machine learning and operations, predictive models have been applied to forecasting system performance [10], discharge readiness [11], and readmission risk [12]. "
+            f"Systematic reviews [13] confirm that AI adoption favours structured, auditable workflows with well-defined inputs. This framing aligns with {sys_name}: "
             f"the algorithm produces a transparent, auditable score and ranked deficiency list intended to assist quality teams rather than function as an opaque decision engine."
         )
 
     elif "3. Problem Statement" in section_name:
         return (
-            f"Hospitals preparing for accreditation face a compliance-management problem with three interacting dimensions: "
-            f"(a) the scale and structure of the framework itself, spanning ten chapters, over two hundred and ten discrete criteria, and over a hundred and thirty-five "
+            f"Institutions preparing for compliance assessment face a management problem with three interacting dimensions: "
+            f"(a) the scale and structure of the framework itself, spanning multiple chapters, over two hundred discrete criteria, and over a hundred and thirty-five "
             f"structured checklist questions; (b) the temporal fragility of compliance evidence, where licenses, certificates, and periodic reports carry their own "
             f"expiry cycles independent of the checklist review cycle; and (c) the absence, in reviewed commercial tools, of a forward-looking readiness indicator "
             f"that quality teams can use to prioritise remediation effort before an external assessment rather than after a deficiency is flagged.\n\n"
             f"The specific objectives of this work are to:\n"
-            f"• design a structured digital representation of the ten-chapter, twenty-five-checklist framework suitable for repeatable self-assessment;\n"
+            f"• design a structured digital representation of the multi-chapter, multi-checklist framework suitable for repeatable self-assessment;\n"
             f"• design and formalise a scoring algorithm that incorporates the validity status of supporting evidence directly into the weighting of each criterion;\n"
             f"• derive, from that weighted score and the profile of open deficiencies, a predictive audit-readiness estimate usable as a leading indicator;\n"
-            f"• implement the design as a functional, role-based, multi-hospital web application; and\n"
+            f"• implement the design as a functional, role-based, multi-tenant web application; and\n"
             f"• evaluate the resulting system against the feature set of publicly documented comparable software to establish its novelty and practical contribution."
         )
 
@@ -428,7 +437,7 @@ def _generate_section_content(
             f"giving quality teams earlier warning than a binary expired/valid alert would provide.\n\n"
             f"Second, none of the reviewed systems describe a predictive, probability-based estimate of external audit outcome derived from the internal compliance score "
             f"and deficiency profile. Existing dashboards report current compliance percentages; they do not translate that percentage, together with the pattern of open non-conformities, "
-            f"into a forward-looking readiness probability of the kind common in predictive hospital-operations research [10]–[12]. {sys_name}'s contribution is therefore a novel "
+            f"into a forward-looking readiness probability of the kind common in predictive operations research [10]–[12]. {sys_name}'s contribution is therefore a novel "
             f"scoring and prediction mechanism layered onto an established problem domain."
         )
 
@@ -438,13 +447,13 @@ def _generate_section_content(
             f"and a data/security layer. Users interact with the front end to register institutions, complete checklists, and view analytics. The application layer "
             f"hosts the scoring engine, expiry scheduler, and REST endpoints. The business layer maintains the checklist engine and scoring models. The security layer "
             f"persists data with row-level isolation between hospital tenants and JWT authentication.\n\n"
-            f"5.1 Data Flow & Scoring Algorithm (VACS)\n"
-            f"The central technical contribution is the Validity-Aware Compliance Scoring (VACS) algorithm. For a hospital $H$, let $R$ be the set of evaluated criteria. "
+            f"5.1 Data Flow & Scoring Algorithm ({alg_acronym})\n"
+            f"The central technical contribution is the {alg_acronym} algorithm. For an institution $H$, let $R$ be the set of evaluated criteria. "
             f"Each criterion $c \\in R$ has a response $r(c) \\in \\{{0, 0.5, 1\\}}$ and an expiry date $d(c)$. The algorithm proceeds as follows:\n\n"
             f"Step 1 (Validity Penalty): For each criterion $c$ with a linked document, if $d(c)$ is within a grace window $\\Delta t$ (default 30 days) or expired, "
             f"a penalty coefficient $\\alpha \\in (0, 1]$ (default $\\alpha = 0.4$) is applied to its base weight $w(c)$:\n"
             f"$$w'(c) = w(c) \\times (1 - \\alpha)$$\n\n"
-            f"Step 2 (Chapter Aggregation): Within each of the ten chapters, the chapter score $S_{{chapter}}$ is computed as the weighted mean:\n"
+            f"Step 2 (Chapter Aggregation): Within each chapter, the chapter score $S_{{chapter}}$ is computed as the weighted mean:\n"
             f"$$S_{{chapter}} = \\frac{{\\sum_{{c \\in \\text{{chapter}}}} r(c) \\times w'(c)}}{{\\sum_{{c \\in \\text{{chapter}}}} w'(c)}}$$\n\n"
             f"Step 3 (Overall Aggregation): The overall compliance score $S_{{overall}}$ is the weighted sum of chapter scores:\n"
             f"$$S_{{overall}} = \\sum_{{i=1}}^{{10}} \\left( S_{{chapter,i}} \\times \\beta_{{chapter,i}} \\right)$$\n\n"
@@ -457,10 +466,10 @@ def _generate_section_content(
     elif "6. Implementation" in section_name:
         return (
             f"6.1 Technology Stack\nThe presentation layer is implemented in Next.js, React, and Tailwind CSS. The application layer is implemented in FastAPI (Python), "
-            f"exposing RESTful endpoints. Data persistence uses PostgreSQL in production and SQLite for local development, with JWT authentication. Multi-hospital data "
-            f"isolation is enforced at the row level so that a single deployment securely serves multiple hospital tenants.\n\n"
+            f"exposing RESTful endpoints. Data persistence uses PostgreSQL in production and SQLite for local development, with JWT authentication. Multi-tenant data "
+            f"isolation is enforced at the row level so that a single deployment securely serves multiple institutional tenants.\n\n"
             f"6.2 Deployment Model & Lean Canvas\n{sys_name} is designed for delivery as a SaaS web application. The problem addressed is manual spreadsheet tracking "
-            f"and unmonitored evidence-expiry risk. Target customer segments include hospital administrators and quality teams pursuing accreditation. The value proposition "
+            f"and unmonitored evidence-expiry risk. Target customer segments include quality administrators pursuing formal compliance accreditation. The value proposition "
             f"is faster, validity-aware readiness assessment with a predictive audit-readiness indicator. Key metrics include compliance score trend, audit-readiness "
             f"probability, and time-to-readiness. Competitive advantage stems from validity-aware criterion-level scoring combined with predictive analytics."
         )
@@ -468,11 +477,11 @@ def _generate_section_content(
     elif "7. Results and Discussion" in section_name:
         return (
             f"7.1 Feature-Level Comparative Evaluation\nBecause {sys_name} has been evaluated against publicly available product documentation for representative systems "
-            f"(generic EMR-linked HMS, MedQPro, and MocDoc CMS), we report a structured feature-level comparison. All systems provide checklist digitisation. Dedicated QMS "
-            f"products provide expiry alerting and KPI dashboards. None of the comparison systems describe a predictive audit-readiness score or a validity-aware penalty mechanism "
+            f"(generic EMR-linked software and dedicated compliance suites), we report a structured feature-level comparison. All systems provide checklist digitisation. Dedicated suites "
+            f"provide expiry alerting and KPI dashboards. None of the comparison systems describe a predictive audit-readiness score or a validity-aware penalty mechanism "
             f"where document expiry directly discounts a criterion's contribution to the aggregate score.\n\n"
-            f"7.2 Illustrative Walkthrough Case\nConsider a hospital quality team completing the Hospital Infection Control checklist. A criterion requiring annual staff vaccination "
-            f"records is marked compliant ($r(c) = 1$), but the certificate expires in twenty days. Under VACS, this criterion falls within the thirty-day grace window, so its weight "
+            f"7.2 Illustrative Walkthrough Case\nConsider a quality team completing a domain safety checklist. A criterion requiring annual equipment inspection "
+            f"records is marked compliant ($r(c) = 1$), but the certificate expires in twenty days. Under {alg_acronym}, this criterion falls within the thirty-day grace window, so its weight "
             f"is discounted by $\\alpha$ before chapter aggregation, and an alert is queued. Under a conventional binary checklist, this criterion would score fully compliant until "
             f"it actually lapsed, revealing the shortfall only during the external audit visit.\n\n"
             f"7.3 Expected Operational Impact\nCoupling validity to scoring shifts discovery of at-risk evidence earlier in the assessment cycle, extending the remediation window. "
@@ -485,8 +494,8 @@ def _generate_section_content(
             f"• Claim 1: The coupling of document validity directly into the weight of a compliance criterion within the score aggregation step (rather than as an independent alert) "
             f"was not found described in the publicly available documentation of the comparison systems reviewed.\n\n"
             f"• Claim 2: The derivation of a predictive, probability-based audit-readiness estimate from the aggregate compliance score and deficiency density, analogous to predictive "
-            f"scoring in hospital operations [10]–[12], was not found described for the institutional accreditation audit problem in the literature or product documentation reviewed.\n\n"
-            f"• Claim 3: The open, criterion-level mapping of the full 210-plus item set within a single integrated scoring engine, spanning all ten chapters, is more granular than "
+            f"scoring in operations research [10]–[12], was not found described for the institutional accreditation audit problem in the literature or product documentation reviewed.\n\n"
+            f"• Claim 3: The open, criterion-level mapping of the full discrete item set within a single integrated scoring engine is more granular than "
             f"the summary-level reporting described in commercial documentation."
         )
 
@@ -496,18 +505,18 @@ def _generate_section_content(
             f"1. The predictive audit-readiness coefficients ($\\gamma_0, \\gamma_1, \\gamma_2$) are currently configured from domain-informed defaults rather than fitted to a labelled dataset "
             f"of historical self-assessment scores paired with actual accreditation outcomes; empirical calibration is required before probability output can be treated as statistically validated.\n"
             f"2. The comparative evaluation is feature-level and based on publicly available vendor documentation rather than direct hands-on testing of competitor systems.\n"
-            f"3. The system has not yet been deployed across multiple hospitals in a live accreditation cycle; usability, workflow-fit, and adoption barriers have not been empirically assessed.\n"
-            f"4. The penalty coefficient $\\alpha$ and chapter weights $\\beta$ are currently configured centrally; their sensitivity to different hospital sizes and specialties requires further study."
+            f"3. The system has not yet been deployed across multiple institutions in a live accreditation cycle; usability, workflow-fit, and adoption barriers have not been empirically assessed.\n"
+            f"4. The penalty coefficient $\\alpha$ and chapter weights $\\beta$ are currently configured centrally; their sensitivity to different institution sizes and specialties requires further study."
         )
 
     elif "10. Conclusion and Future Work" in section_name:
         return (
-            f"This paper presented {sys_name}, a decision support system for pre-entry accreditation compliance built around the Validity-Aware Compliance Scoring (VACS) algorithm. "
-            f"VACS discounts a compliance criterion's contribution to the aggregate score as its supporting document approaches expiry, and derives a predictive audit-readiness probability "
+            f"This paper presented {sys_name}, a decision support system for pre-entry accreditation compliance built around the {alg_acronym} algorithm. "
+            f"{alg_acronym} discounts a compliance criterion's contribution to the aggregate score as its supporting document approaches expiry, and derives a predictive audit-readiness probability "
             f"from the weighted score and deficiency profile. Comparative evaluation indicates that while checklist digitisation is standard, the validity-aware scoring and predictive readiness "
             f"estimate proposed here support a bounded claim of novelty for this specific scoring and prediction layer.\n\n"
-            f"Future work will prioritise three directions: (i) empirical calibration of predictive coefficients against historical hospital self-assessment scores and actual audit outcomes; "
-            f"(ii) a controlled usability and workflow-fit study with hospital quality-team users; and (iii) an expanded, systematic novelty search covering patent databases ahead of formal journal submission."
+            f"Future work will prioritise three directions: (i) empirical calibration of predictive coefficients against historical self-assessment scores and actual audit outcomes; "
+            f"(ii) a controlled usability and workflow-fit study with quality-team users; and (iii) an expanded, systematic novelty search covering patent databases ahead of formal journal submission."
         )
 
     return f"Detailed section content for {section_name} focusing on {topic}."
