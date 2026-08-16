@@ -1,8 +1,11 @@
+import os
+from typing import Dict, Any
+
 try:
     from pypdf import PdfReader
 except ImportError:
     PdfReader = None
-from typing import Dict, Any
+
 from backend.app.parser.docx_parser import parse_docx
 from backend.app.parser.pdf_parser import parse_pdf
 from backend.app.parser.ocr_engine import ocr_pdf
@@ -25,14 +28,21 @@ def parse_document(file_path: str, media_dir: str = "uploads/media") -> Dict[str
             return parse_pdf_with_marker(file_path, media_dir)
             
         # Check if PDF contains text, or if it is scanned
-        reader = PdfReader(file_path)
-        total_chars = 0
-        for page in reader.pages:
-            total_chars += len(page.extract_text() or "")
-        
-        if total_chars < 50:
-            # Let's consider it a scanned PDF and run OCR
-            return ocr_pdf(file_path, media_dir)
+        if PdfReader is not None:
+            try:
+                reader = PdfReader(file_path)
+                total_chars = 0
+                for page in reader.pages:
+                    total_chars += len(page.extract_text() or "")
+                
+                if total_chars < 50:
+                    # Scanned PDF, run OCR
+                    return ocr_pdf(file_path, media_dir)
+                else:
+                    return parse_pdf(file_path, media_dir)
+            except Exception as e:
+                print(f"PdfReader extraction failed, falling back to parse_pdf: {e}")
+                return parse_pdf(file_path, media_dir)
         else:
             return parse_pdf(file_path, media_dir)
             
