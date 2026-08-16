@@ -382,11 +382,12 @@ async def generate_paper(
             elif ext == ".pdf":
                 from backend.app.parser.pdf_parser import parse_pdf
                 parsed = parse_pdf(temp_path)
-                context_notes = "\n".join([block.get("original_text", "") for block in parsed])
+                context_notes = "\n".join([block.get("original_text", "") for block in parsed.get("sections", [])])
             elif ext == ".docx":
                 from backend.app.parser.docx_parser import parse_docx
                 parsed = parse_docx(temp_path)
-                context_notes = "\n".join([block.get("original_text", "") for block in parsed])
+                context_notes = "\n".join([block.get("original_text", "") for block in parsed.get("sections", [])])
+
             elif ext in [".pptx", ".ppt"]:
                 try:
                     from pptx import Presentation
